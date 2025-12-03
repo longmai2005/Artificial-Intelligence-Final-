@@ -1,0 +1,24 @@
+# Bỏ qua file dữ liệu nặng (người khác sẽ tự tải về sau)
+data/*.txt
+data/*.csv
+data/*.zip
+
+# Giữ lại file .gitkeep nếu thư mục data trống (để giữ cấu trúc thư mục)
+!data/.gitkeep
+
+# Bỏ qua môi trường ảo Python
+venv/
+env/
+.env
+
+# Bỏ qua các file rác của Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Bỏ qua file cấu hình IDE
+.vscode/
+.idea/
+
+# Bỏ qua file model quá nặng (nếu file .h5 > 100MB thì bỏ comment dòng dưới)
+# models/*.h5
