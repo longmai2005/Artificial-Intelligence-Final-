@@ -10,7 +10,7 @@ def load_dataset(file_path=None, nrows=None):
     """
     st.warning("⚠️ Đang chạy chế độ DEMO (Dữ liệu giả lập).")
     
-    date_rng = pd.date_range(start='2006-16-12', end='2010-11-26', freq='min')
+    date_rng = pd.date_range(start='2006-12-16', end='2010-11-26', freq='min')
     df = pd.DataFrame(date_rng, columns=['dt'])
     df = df.set_index('dt')
     
