@@ -11,6 +11,12 @@
             "inputs": "Chung c\u01b0, 1 AC",
             "kwh": 14.1,
             "cost": 35022
+        },
+        {
+            "timestamp": "2025-12-05 13:20:22",
+            "inputs": "Nh\u00e0 ph\u1ed1, 3 AC",
+            "kwh": 34.3,
+            "cost": 98672
         }
     ]
 }
