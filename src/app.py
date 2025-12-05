@@ -1,3 +1,4 @@
+# File: src/app.py
 import streamlit as st
 import pandas as pd
 import sys
@@ -13,6 +14,7 @@ from src.components.dashboard import render_dashboard
 from src.components.forecast import render_forecast
 from src.components.recommendation import render_recommendations
 from src.components.user_page import render_user_page
+from src.components.chatbot import render_chatbot  # Import Chatbot
 from src.utils.style import apply_custom_style
 
 # --- CONFIG ---
@@ -93,42 +95,51 @@ def main_app():
     # 1. GIAO DIỆN ADMIN (Xem toàn bộ hệ thống giả lập)
     if st.session_state['user_role'] == 'admin':
         st.sidebar.header("🔧 Admin Panel")
-        menu = st.sidebar.radio("Menu:", ["Tổng quan (Dashboard)", "Dự báo (Forecast)", "Đề xuất (Savings)"])
+        menu = st.sidebar.radio("Menu:", ["Tổng quan", "Dự báo", "Đề xuất", "Trợ lý AI"])
         
-        # Admin controls simulation
-        st.sidebar.markdown("---")
-        st.sidebar.caption("Điều khiển Simulator")
-        
-        # Load Data Logic (Admin Only)
-        DATA_PATH = os.path.join("data", "household_power_consumption.txt")
-        df = load_dataset(DATA_PATH, nrows=20000)
-        
-        min_date = df.index.min()
-        selected_date = st.sidebar.date_input("Ngày:", min_date)
-        selected_hour = st.sidebar.slider("Giờ:", 0, 23, 19)
-        
-        # Lấy data giả lập
-        try:
-            current_ts = pd.Timestamp(f"{selected_date} {selected_hour}:00:00")
-            idx = df.index.get_indexer([current_ts], method='nearest')[0]
-            current_time = df.index[idx]
-            current_data = df.iloc[idx]
-            predictor = EnergyPredictor() # Load model
+        # Admin controls simulation (Chỉ hiện khi không chọn Trợ lý AI)
+        if menu != "Trợ lý AI":
+            st.sidebar.markdown("---")
+            st.sidebar.caption("Điều khiển Simulator")
             
-            if menu == "Tổng quan (Dashboard)":
-                render_dashboard(current_data, current_time)
-            elif menu == "Dự báo (Forecast)":
-                render_forecast(predictor, df, current_time)
-            elif menu == "Đề xuất (Savings)":
-                render_recommendations(current_time, current_data)
+            # Load Data Logic
+            DATA_PATH = os.path.join("data", "household_power_consumption.txt")
+            df = load_dataset(DATA_PATH, nrows=20000)
+            
+            min_date = df.index.min()
+            selected_date = st.sidebar.date_input("Ngày:", min_date)
+            selected_hour = st.sidebar.slider("Giờ:", 0, 23, 19)
+            
+            # Lấy data giả lập
+            try:
+                current_ts = pd.Timestamp(f"{selected_date} {selected_hour}:00:00")
+                idx = df.index.get_indexer([current_ts], method='nearest')[0]
+                current_time = df.index[idx]
+                current_data = df.iloc[idx]
+                predictor = EnergyPredictor() # Load model
                 
-        except Exception as e:
-            st.error(f"Lỗi Simulator: {e}")
+                if menu == "Tổng quan":
+                    render_dashboard(current_data, current_time)
+                elif menu == "Dự báo":
+                    render_forecast(predictor, df, current_time)
+                elif menu == "Đề xuất":
+                    render_recommendations(current_time, current_data)
+                    
+            except Exception as e:
+                st.error(f"Lỗi Simulator: {e}")
+                
+        else: # Nếu chọn menu Trợ lý AI
+            render_chatbot()
 
     # 2. GIAO DIỆN USER THƯỜNG (Chỉ xem trang cá nhân)
     else:
         st.sidebar.info("Đây là trang dành cho người dùng cá nhân.")
         render_user_page(st.session_state['username'], st.session_state['full_name'])
+        
+        # CHATBOT Ở CUỐI TRANG USER
+        st.markdown("---")
+        with st.expander("💬 Chat với Trợ lý Năng lượng AI"):
+            render_chatbot()
 
 if __name__ == "__main__":
     if st.session_state['logged_in']:
