@@ -11,7 +11,7 @@ USER_DB_PATH = "data/users.json"
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "longmai0520@gmail.com"
-SENDER_PASSWORD = "điền_mật_khẩu_ứng_dụng_vào_đây" # Nhớ điền App Password
+SENDER_PASSWORD = "fyxl jibq ohmi xeio"
 
 def load_users():
     if not os.path.exists(USER_DB_PATH):
@@ -51,30 +51,50 @@ def check_user_exists(username, email):
         if u == username.strip() or d.get('email') == email.strip(): return True
     return False
 
-# ... (Giữ nguyên các hàm gửi email, reset pass, generate_otp như cũ) ...
 def reset_password(username, new_password):
     users = load_users()
-    username = username.strip()
     if username in users:
-        users[username]["password"] = new_password.strip()
-        with open(USER_DB_PATH, "w") as f: json.dump(users, f)
+        users[username]["password"] = new_password
+        with open(USER_DB_PATH, "w") as f:
+            json.dump(users, f)
         return True
     return False
 
 def generate_otp():
+    """Tạo mã OTP 6 số ngẫu nhiên"""
     return ''.join(random.choices(string.digits, k=6))
 
 def send_email_otp(receiver_email, otp_code):
+    """Gửi email chứa OTP"""
+    subject = "🔑 Mã xác thực đăng ký Smart Energy"
+    body = f"""
+    <html>
+    <body>
+        <h2 style="color: #00C9FF;">Xác thực tài khoản Smart Energy Saver</h2>
+        <p>Xin chào,</p>
+        <p>Cảm ơn bạn đã đăng ký. Đây là mã xác thực (OTP) của bạn:</p>
+        <h1 style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; display: inline-block; letter-spacing: 5px;">{otp_code}</h1>
+        <p>Mã này sẽ hết hạn trong 5 phút.</p>
+        <p><i>(Email được gửi tự động từ hệ thống Smart Energy Saver)</i></p>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = receiver_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'html'))
+
     try:
-        msg = MIMEMultipart()
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = receiver_email
-        msg['Subject'] = "Smart Energy OTP"
-        msg.attach(MIMEText(f"Mã OTP của bạn là: {otp_code}", 'plain'))
+        # Thử kết nối đến Server Gmail
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
+        # Đăng nhập bằng Mật khẩu ứng dụng (App Password)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
         server.quit()
-        return True
-    except: return False
+        return True # Gửi thành công
+    except Exception as e:
+        print(f"Lỗi gửi email: {e}")
+        return False # Gửi thất bại
