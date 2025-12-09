@@ -9,12 +9,10 @@ import streamlit as st
 
 USER_DB_PATH = "data/users.json"
 
-# --- CẤU HÌNH EMAIL (Thay bằng email thật của bạn nếu muốn chạy thật) ---
-# Nếu chạy demo, bạn cứ để nguyên, hệ thống sẽ tự giả lập.
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "your_email@gmail.com" 
-SENDER_PASSWORD = "your_app_password" # Mật khẩu ứng dụng (Không phải mật khẩu đăng nhập Gmail)
+SENDER_EMAIL = "longmai0520@gmail.com"  
+SENDER_PASSWORD = "fyxl jibq ohmi xeio" 
 
 def load_users():
     if not os.path.exists(USER_DB_PATH):
@@ -53,10 +51,18 @@ def authenticate(username, password):
 
 def check_user_exists(username, email):
     users = load_users()
-    # Kiểm tra xem username hoặc email đã tồn tại chưa
     for u, data in users.items():
         if u == username or data.get('email') == email:
             return True
+    return False
+
+def reset_password(username, new_password):
+    users = load_users()
+    if username in users:
+        users[username]["password"] = new_password
+        with open(USER_DB_PATH, "w") as f:
+            json.dump(users, f)
+        return True
     return False
 
 # --- LOGIC OTP & EMAIL ---
@@ -66,10 +72,7 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_email_otp(receiver_email, otp_code):
-    """
-    Gửi email chứa OTP. 
-    Nếu cấu hình sai hoặc lỗi mạng, sẽ trả về False (để chuyển sang chế độ giả lập).
-    """
+    """Gửi email chứa OTP"""
     subject = "🔑 Mã xác thực đăng ký Smart Energy"
     body = f"""
     <html>
@@ -78,9 +81,8 @@ def send_email_otp(receiver_email, otp_code):
         <p>Xin chào,</p>
         <p>Cảm ơn bạn đã đăng ký. Đây là mã xác thực (OTP) của bạn:</p>
         <h1 style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; display: inline-block; letter-spacing: 5px;">{otp_code}</h1>
-        <p>Mã này sẽ hết hạn trong 5 phút. Vui lòng không chia sẻ cho ai khác.</p>
-        <br>
-        <p>Trân trọng,<br>Smart Energy Team</p>
+        <p>Mã này sẽ hết hạn trong 5 phút.</p>
+        <p><i>(Email được gửi tự động từ hệ thống Smart Energy Saver)</i></p>
     </body>
     </html>
     """
@@ -95,10 +97,11 @@ def send_email_otp(receiver_email, otp_code):
         # Thử kết nối đến Server Gmail
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
+        # Đăng nhập bằng Mật khẩu ứng dụng (App Password)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
         server.quit()
         return True # Gửi thành công
     except Exception as e:
         print(f"Lỗi gửi email: {e}")
-        return False # Gửi thất bại (Chuyển sang giả lập)
+        return False # Gửi thất bại
