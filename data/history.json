@@ -18,5 +18,13 @@
             "kwh": 34.3,
             "cost": 98672
         }
+    ],
+    "khtran": [
+        {
+            "timestamp": "2025-12-10 00:29:25",
+            "inputs": "Chung c\u01b0 (Smart)",
+            "kwh": 16.6,
+            "cost": 42899
+        }
     ]
 }
