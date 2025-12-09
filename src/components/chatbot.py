@@ -1,73 +1,64 @@
 import streamlit as st
 import time
-from src.backend.ai_engine import ask_gemini  # Import bộ não AI mới
+# Nếu chưa có file ai_engine thì dùng hàm giả lập bên dưới, nếu có rồi thì uncomment dòng sau:
+from src.backend.ai_engine import ask_gemini 
 
 def render_floating_chatbot():
-    """Hiển thị Chatbot AI thông minh"""
-    
-    # CSS tùy chỉnh cho Chatbot đẹp hơn
+    # CSS để tùy chỉnh Chatbot đẹp hơn
     st.markdown("""
-        <style>
-        .stChatInput {
+    <style>
+        .stPopover {
             position: fixed;
-            bottom: 20px;
-            z-index: 1000;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
         }
-        </style>
+        .stChatInputContainer {
+            padding-bottom: 10px;
+        }
+    </style>
     """, unsafe_allow_html=True)
 
-    with st.popover("💬 Trợ lý AI Pro", use_container_width=False):
-        st.markdown("### 🤖 AI Energy Expert")
-        st.caption("Sử dụng công nghệ Google Gemini")
+    with st.popover("💬 Trợ lý AI", use_container_width=False):
+        st.markdown("### 🤖 Energy Expert AI")
+        st.caption("Hỏi tôi về cách tiết kiệm điện, phân tích hóa đơn...")
         
-        # 1. Khởi tạo lịch sử chat
+        # Init Chat History
         if "messages" not in st.session_state:
-            st.session_state.messages = []
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "content": "Xin chào! Tôi là AI thực thụ. Bạn có thể hỏi tôi bất cứ điều gì về cách tiết kiệm điện, cách chọn điều hòa, hay phân tích hóa đơn..."
-            })
+            st.session_state.messages = [{"role": "assistant", "content": "Xin chào! Tôi có thể giúp gì cho bạn?"}]
 
-        # 2. Container nội dung chat
-        chat_container = st.container(height=350)
+        # Container chat (Scrollable)
+        chat_container = st.container(height=400)
         
         with chat_container:
             for msg in st.session_state.messages:
-                # Phân biệt icon user và bot
-                avatar = "👤" if msg["role"] == "user" else "🤖"
+                avatar = "🤖" if msg["role"] == "assistant" else "👤"
                 with st.chat_message(msg["role"], avatar=avatar):
                     st.write(msg["content"])
 
-        # 3. Khu vực nhập liệu
-        if prompt := st.chat_input("Hỏi tôi bất cứ gì...", key="chat_input_widget"):
-            # Hiện câu hỏi user
+        # Input Area
+        if prompt := st.chat_input("Nhập câu hỏi...", key="bot_input"):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with chat_container:
                 with st.chat_message("user", avatar="👤"):
                     st.write(prompt)
-
-            # --- GỌI AI TRẢ LỜI ---
-            with chat_container:
+                
                 with st.chat_message("assistant", avatar="🤖"):
-                    # Hiệu ứng loading chuyên nghiệp
-                    message_placeholder = st.empty()
-                    full_response = ""
-                    
-                    with st.spinner("AI đang suy nghĩ..."):
-                        # Gọi hàm từ ai_engine.py
-                        ai_reply = ask_gemini(prompt)
+                    with st.spinner("Đang suy nghĩ..."):
+                        # --- GỌI AI ---
+                        try:
+                            response = ask_gemini(prompt) # Gọi từ ai_engine.py
+                        except:
+                            time.sleep(1)
+                            response = "Tôi đang gặp chút sự cố kết nối AI. Bạn hãy thử lại sau nhé!"
                         
-                        # Hiệu ứng đánh máy (Typewriter effect)
-                        for chunk in ai_reply.split():
-                            full_response += chunk + " "
+                        # Hiệu ứng đánh máy
+                        text_placeholder = st.empty()
+                        full_text = ""
+                        for chunk in response.split():
+                            full_text += chunk + " "
                             time.sleep(0.05)
-                            message_placeholder.markdown(full_response + "▌")
-                        
-                        message_placeholder.markdown(full_response)
+                            text_placeholder.markdown(full_text + "▌")
+                        text_placeholder.markdown(full_text)
             
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-        
-        # Nút xóa lịch sử
-        if st.button("🗑️ Xóa đoạn chat", use_container_width=True):
-            st.session_state.messages = []
-            st.rerun()
+            st.session_state.messages.append({"role": "assistant", "content": response})
