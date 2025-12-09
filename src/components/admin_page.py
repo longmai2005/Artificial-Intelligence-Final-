@@ -9,6 +9,20 @@ from src.backend.predictor import EnergyPredictor
 from src.backend.auth import load_users, USER_DB_PATH
 from src.utils.style import card_container, custom_spinner
 
+def delete_user(username_to_delete):
+    """Hàm xóa user khỏi database"""
+    users = load_users()
+    if username_to_delete in users:
+        # Không cho phép xóa admin gốc
+        if users[username_to_delete]['role'] == 'admin':
+            return False, "Không thể xóa tài khoản Admin gốc!"
+        
+        del users[username_to_delete]
+        with open(USER_DB_PATH, "w") as f:
+            json.dump(users, f)
+        return True, "Đã xóa thành công!"
+    return False, "User không tồn tại."
+
 def render_admin_page():
     # --- HEADER ---
     st.markdown("## 🛡️ Trung Tâm Quản Trị Hệ Thống (Admin Hub)")
@@ -110,6 +124,24 @@ def render_admin_page():
             file_name='ds_nguoi_dung.csv',
             mime='text/csv',
         )
+        
+        st.subheader("Danh sách người dùng")
+        
+        st.markdown("### 🗑️ Xóa Người Dùng")
+        with st.expander("Mở công cụ xóa"):
+            col_del, col_btn = st.columns([3, 1])
+            with col_del:
+                user_to_del = st.selectbox("Chọn user để xóa:", 
+                                         [u for u in users_db.keys() if u != 'admin'])
+            with col_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("Xóa vĩnh viễn ❌", type="primary"):
+                    success, msg = delete_user(user_to_del)
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
 
     # === TAB 3: CẤU HÌNH HỆ THỐNG (SYSTEM CONFIG) ===
     with tab_system:

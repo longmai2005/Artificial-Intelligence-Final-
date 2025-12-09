@@ -1,70 +1,73 @@
-# File: src/components/chatbot.py
 import streamlit as st
 import time
-
-def get_bot_response(user_input):
-    """Logic trả lời thông minh (Rule-based)"""
-    user_input = user_input.lower()
-    
-    if any(x in user_input for x in ["xin chào", "hi", "hello"]):
-        return "Chào bạn! Tôi là trợ lý năng lượng ảo. Bạn cần giúp gì về tiết kiệm điện hôm nay?"
-    elif "tủ lạnh" in user_input:
-        return "Tủ lạnh ngốn khoảng 20% điện gia đình. Mẹo: Đặt nhiệt độ ngăn mát 4-5°C, ngăn đông -18°C. Không để tủ quá trống hoặc quá đầy."
-    elif any(x in user_input for x in ["máy lạnh", "điều hòa"]):
-        return "Máy lạnh là 'vua' ngốn điện. Mẹo: Bật 26°C kèm quạt. Mỗi độ tăng lên giúp tiết kiệm 3% điện năng."
-    elif "máy giặt" in user_input:
-        return "Nên giặt nước lạnh và gom đủ quần áo một lần giặt. Tránh giặt vào giờ cao điểm (18h-20h)."
-    elif any(x in user_input for x in ["bậc thang", "giá điện"]):
-        return "Hệ thống tính tiền theo 6 bậc EVN. Bậc 1 rẻ nhất (1.806đ), Bậc 6 đắt nhất (3.151đ). Hãy cố gắng dùng dưới 200kWh/tháng."
-    else:
-        return "Tôi chưa hiểu rõ lắm. Bạn hãy thử hỏi về 'tủ lạnh', 'điều hòa' hoặc 'cách tính tiền điện' nhé."
+from src.backend.ai_engine import ask_gemini  # Import bộ não AI mới
 
 def render_floating_chatbot():
-    """Hiển thị Chatbot dạng bong bóng ở góc dưới"""
+    """Hiển thị Chatbot AI thông minh"""
     
-    # CSS để đẩy nút popover xuống góc phải (Floating Action Button style)
-    # Lưu ý: st.popover mặc định nằm theo luồng, ta dùng CSS để trang trí thêm nếu cần
-    # Ở đây ta dùng st.popover tiêu chuẩn của Streamlit mới nhất
-    
-    with st.popover("💬 Trợ lý AI", use_container_width=False):
-        st.markdown("### 🤖 Hỗ trợ trực tuyến")
-        st.caption("Hỏi tôi bất cứ điều gì về cách tiết kiệm điện!")
+    # CSS tùy chỉnh cho Chatbot đẹp hơn
+    st.markdown("""
+        <style>
+        .stChatInput {
+            position: fixed;
+            bottom: 20px;
+            z-index: 1000;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    with st.popover("💬 Trợ lý AI Pro", use_container_width=False):
+        st.markdown("### 🤖 AI Energy Expert")
+        st.caption("Sử dụng công nghệ Google Gemini")
         
         # 1. Khởi tạo lịch sử chat
         if "messages" not in st.session_state:
             st.session_state.messages = []
-            # Câu chào mặc định đầu tiên
             st.session_state.messages.append({
                 "role": "assistant", 
-                "content": "👋 Xin chào! Tôi có thể giúp bạn tính toán chi phí hoặc gợi ý mẹo tiết kiệm điện cho Tủ lạnh, Máy lạnh..."
+                "content": "Xin chào! Tôi là AI thực thụ. Bạn có thể hỏi tôi bất cứ điều gì về cách tiết kiệm điện, cách chọn điều hòa, hay phân tích hóa đơn..."
             })
 
-        # 2. Container chứa nội dung chat (để scroll được)
-        chat_container = st.container(height=300)
+        # 2. Container nội dung chat
+        chat_container = st.container(height=350)
         
         with chat_container:
             for msg in st.session_state.messages:
-                with st.chat_message(msg["role"]):
+                # Phân biệt icon user và bot
+                avatar = "👤" if msg["role"] == "user" else "🤖"
+                with st.chat_message(msg["role"], avatar=avatar):
                     st.write(msg["content"])
 
         # 3. Khu vực nhập liệu
-        if prompt := st.chat_input("Nhập câu hỏi...", key="chat_input_widget"):
+        if prompt := st.chat_input("Hỏi tôi bất cứ gì...", key="chat_input_widget"):
             # Hiện câu hỏi user
             st.session_state.messages.append({"role": "user", "content": prompt})
             with chat_container:
-                with st.chat_message("user"):
+                with st.chat_message("user", avatar="👤"):
                     st.write(prompt)
 
-            # Bot trả lời
-            response = get_bot_response(prompt)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            # --- GỌI AI TRẢ LỜI ---
             with chat_container:
-                with st.chat_message("assistant"):
-                    with st.spinner("Đang nhập..."):
-                        time.sleep(0.5)
-                        st.write(response)
+                with st.chat_message("assistant", avatar="🤖"):
+                    # Hiệu ứng loading chuyên nghiệp
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    
+                    with st.spinner("AI đang suy nghĩ..."):
+                        # Gọi hàm từ ai_engine.py
+                        ai_reply = ask_gemini(prompt)
+                        
+                        # Hiệu ứng đánh máy (Typewriter effect)
+                        for chunk in ai_reply.split():
+                            full_response += chunk + " "
+                            time.sleep(0.05)
+                            message_placeholder.markdown(full_response + "▌")
+                        
+                        message_placeholder.markdown(full_response)
+            
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
         
         # Nút xóa lịch sử
-        if st.button("Làm mới đoạn chat", type="primary"):
+        if st.button("🗑️ Xóa đoạn chat", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
