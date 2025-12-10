@@ -3,18 +3,24 @@ import sys
 import os
 import time
 
-# --- SETUP ---
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.backend.auth import authenticate, save_user, check_user_exists, generate_otp, send_email_otp, reset_password
-from src.components.user_page import render_user_page
-from src.components.admin_page import render_admin_page
-from src.components.chatbot import render_floating_chatbot
-from src.utils.style import apply_custom_style
-
-# --- CONFIG ---
+# Config
 st.set_page_config(page_title="Smart Energy", layout="wide", page_icon="⚡")
 
-# --- SESSION ---
+# Setup Path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Imports
+try:
+    from src.backend.auth import authenticate, save_user, check_user_exists, generate_otp, send_email_otp, reset_password
+    from src.components.user_page import render_user_page
+    from src.components.admin_page import render_admin_page
+    from src.components.chatbot import render_floating_chatbot
+    from src.utils.style import apply_custom_style
+except ImportError as e:
+    st.error(f"⚠️ Lỗi cấu trúc file: {e}. Hãy đảm bảo bạn đã tạo đủ file trong thư mục src/utils và src/components.")
+    st.stop()
+
+# Session State
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if 'auth_mode' not in st.session_state: st.session_state['auth_mode'] = 'login'
 if 'user_role' not in st.session_state: st.session_state['user_role'] = None
@@ -31,75 +37,70 @@ def login_page():
     if st.session_state['logged_in']: return
     apply_custom_style()
     
-    # Layout căn giữa màn hình
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
+    # Layout Căn giữa
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        # --- KHUNG ĐĂNG NHẬP (Card) ---
+        # Header Card
         st.markdown("""
             <div class='login-card'>
-                <div style="font-size: 40px; margin-bottom: 10px;">⚡</div>
+                <div style="font-size: 50px; margin-bottom: 10px;">⚡</div>
                 <h1 class='brand-text'>Smart Energy</h1>
-                <p class='slogan-text'>Hãy Vì Một Năng Lượng Xanh</p>
+                <p style="color:#94a3b8; margin-bottom: 20px;">Giải pháp tiết kiệm năng lượng 4.0</p>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Form logic
+
         if st.session_state['auth_mode'] == 'login':
+            st.markdown("### 🔐 Đăng Nhập")
             with st.form("login_form"):
                 u = st.text_input("Tài khoản", placeholder="Username")
                 p = st.text_input("Mật khẩu", type="password", placeholder="••••••")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.form_submit_button("🚀 Đăng Nhập Ngay"):
+                if st.form_submit_button("🚀 Đăng Nhập"):
                     res = authenticate(u, p)
-                    if res == "NOT_FOUND": st.error("❌ Tài khoản không tồn tại!")
-                    elif res == "WRONG_PASS": st.error("❌ Sai mật khẩu.")
+                    if res == "NOT_FOUND": 
+                        st.error("❌ Tài khoản này chưa đăng ký!")
+                    elif res == "WRONG_PASS": 
+                        st.error("❌ Sai mật khẩu.")
                     elif res:
                         st.session_state['logged_in'] = True
                         st.session_state['user_role'] = res['role']
                         st.session_state['username'] = u
                         st.session_state['full_name'] = res['name']
-                        st.toast("Đăng nhập thành công!", icon="🎉")
+                        st.toast("Đăng nhập thành công!", icon="🟢")
                         time.sleep(0.5)
                         st.rerun()
             
-            # Các nút phụ (Nằm dưới form, căn đều)
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-            c_reg, c_forgot = st.columns(2)
-            with c_reg:
-                if st.button("✨ Tạo tài khoản"): switch_mode('register')
-            with c_forgot:
-                if st.button("❓ Quên mật khẩu"): switch_mode('forgot')
+            c1, c2 = st.columns(2)
+            if c1.button("✨ Tạo tài khoản"): switch_mode('register')
+            if c2.button("❓ Quên mật khẩu"): switch_mode('forgot')
 
-        # --- ĐĂNG KÝ ---
         elif st.session_state['auth_mode'] == 'register':
-            st.markdown("<h4 style='text-align:center;'>Tạo Tài Khoản Mới</h4>", unsafe_allow_html=True)
-            
+            st.markdown("### ✨ Đăng Ký Mới")
             if st.session_state['reg_step'] == 1:
                 name = st.text_input("Họ Tên", key="rn")
                 email = st.text_input("Email", key="re")
                 user = st.text_input("Username", key="ru")
                 pw = st.text_input("Password", type="password", key="rp")
                 
-                if st.button("Gửi mã OTP ➤", type="primary"):
-                    if user and email and pw:
+                if st.button("Gửi OTP ➤", type="primary"):
+                    if user and email:
                         if check_user_exists(user, email): st.error("Đã tồn tại!")
                         else:
                             otp = generate_otp()
                             st.session_state['reg_otp'] = otp
                             st.session_state['reg_data'] = {"user": user, "pass": pw, "name": name, "email": email}
-                            with st.spinner("Đang gửi mail..."):
-                                if send_email_otp(email, otp): st.success(f"OTP đã gửi tới {email}")
+                            with st.spinner("Đang gửi OTP..."):
+                                sent = send_email_otp(email, otp)
+                                if sent: st.success(f"OTP đã gửi đến {email}")
                                 else: st.info(f"Demo OTP: {otp}")
                             st.session_state['reg_step'] = 2
                             st.rerun()
-                    else: st.warning("Nhập đủ thông tin nhé!")
-                
+                    else: st.warning("Nhập đủ thông tin!")
                 if st.button("⬅ Quay lại"): switch_mode('login')
 
             elif st.session_state['reg_step'] == 2:
-                st.info(f"Nhập mã gửi về {st.session_state['reg_data']['email']}")
+                st.info(f"Nhập mã OTP gửi về {st.session_state['reg_data']['email']}")
                 otp_in = st.text_input("Mã OTP", max_chars=6)
                 if st.button("✅ Xác nhận"):
                     if otp_in == st.session_state['reg_otp']:
@@ -107,14 +108,13 @@ def login_page():
                         save_user(d['user'], d['pass'], d['name'], d['email'])
                         st.balloons()
                         st.success("Thành công!")
-                        time.sleep(1.5)
+                        time.sleep(1)
                         switch_mode('login')
                     else: st.error("Sai mã OTP.")
                 if st.button("Hủy"): switch_mode('login')
 
-        # --- QUÊN MK ---
         elif st.session_state['auth_mode'] == 'forgot':
-            st.markdown("<h4 style='text-align:center;'>Khôi Phục Mật Khẩu</h4>", unsafe_allow_html=True)
+            st.markdown("### 🔑 Khôi phục")
             with st.form("forgot"):
                 fu = st.text_input("Username")
                 fe = st.text_input("Email")
@@ -122,10 +122,10 @@ def login_page():
                 if st.form_submit_button("Đặt lại"):
                     if check_user_exists(fu, fe):
                         reset_password(fu, fp)
-                        st.success("Xong! Đăng nhập lại nhé.")
-                        time.sleep(1.5)
+                        st.success("Xong! Đăng nhập lại.")
+                        time.sleep(1)
                         switch_mode('login')
-                    else: st.error("Sai thông tin.")
+                    else: st.error("Thông tin không chính xác.")
             if st.button("⬅ Quay lại"): switch_mode('login')
 
 def main_app():
