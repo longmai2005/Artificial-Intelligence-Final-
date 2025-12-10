@@ -17,6 +17,12 @@
             "inputs": "Nh\u00e0 ph\u1ed1, 3 AC",
             "kwh": 34.3,
             "cost": 98672
+        },
+        {
+            "timestamp": "2025-12-10 15:38:54",
+            "inputs": "Chung c\u01b0",
+            "kwh": 17.6,
+            "cost": 46050
         }
     ],
     "khtran": [
