@@ -5,131 +5,103 @@ def apply_custom_style():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
+        /* 1. MÀU MẶC ĐỊNH (DARK MODE) */
         :root {
-            --bg-dark: #0f172a;
+            --bg-color: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --sub-text: #94a3b8;
             --primary: #3b82f6;
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-sub: #94a3b8;
         }
 
+        /* 2. MÀU SÁNG (LIGHT MODE) - Tự động nhận diện */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f8fafc;
+                --glass-bg: #ffffff;
+                --border-color: #e2e8f0;
+                --text-color: #0f172a;
+                --sub-text: #64748b;
+            }
+        }
+
+        /* 3. ÁP DỤNG BIẾN VÀO GIAO DIỆN */
         .stApp {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.5) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.5) 0, transparent 50%);
+            background-color: var(--bg-color);
+            /* Gradient nhẹ nền */
+            background-image: radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
             font-family: 'Inter', sans-serif;
-            color: var(--text-main);
+            color: var(--text-color);
         }
 
-        /* --- 1. LOGIN CARD FIX (Quan trọng) --- */
-        /* Biến khung container mặc định của Streamlit thành thẻ kính */
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        
-        /* Căn giữa tiêu đề trong Login */
-        .login-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .brand-text {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0;
-        }
-
-        /* --- 2. HOMEPAGE STYLES --- */
-        .hero-container {
-            text-align: center;
-            padding: 60px 20px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .hero-title {
-            font-size: 4rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-desc {
-            font-size: 1.2rem;
-            color: var(--text-sub);
-            max-width: 700px;
-            margin: 0 auto 40px;
-        }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
+        /* Container kính mờ (Login card, Admin cards) */
+        div[data-testid="stVerticalBlockBorderWrapper"], .metric-card, .login-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            height: 100%;
-            transition: transform 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-        .feature-icon { font-size: 2.5rem; margin-bottom: 15px; display: block; }
-        .feature-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; color: white; }
 
-        /* --- 3. INPUTS & BUTTONS --- */
+        /* Text colors */
+        h1, h2, h3, p, span, div, label {
+            color: var(--text-color) !important;
+        }
+        .text-sub { color: var(--sub-text) !important; }
+
+        /* Inputs */
         .stTextInput input {
-            background: rgba(0, 0, 0, 0.2) !important;
-            border: 1px solid var(--border) !important;
-            color: white !important;
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
             border-radius: 12px !important;
-            padding: 12px 15px !important;
         }
         .stTextInput input:focus {
             border-color: var(--primary) !important;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
         }
-        
+
+        /* Buttons */
         .stButton button {
-            width: 100%;
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-            color: white !important;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white !important; /* Chữ nút luôn trắng */
             border: none;
             border-radius: 12px;
             height: 48px;
             font-weight: 600;
-            transition: 0.3s;
         }
         .stButton button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
         }
 
-        /* --- 4. METRIC CARD --- */
-        .metric-card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
+        /* Dataframe fix color */
+        div[data-testid="stDataFrame"] {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
         }
-        .metric-title { font-size: 0.85rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
-        .metric-value { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-top: 5px; }
+        
+        /* Metric Card Specific */
+        .metric-card { padding: 20px; text-align: center; }
+        .metric-title { font-size: 0.85rem; color: var(--sub-text) !important; text-transform: uppercase; }
+        .metric-value { font-size: 1.8rem; font-weight: 700; color: var(--text-color) !important; margin-top: 5px; }
+        
+        /* Homepage Specific */
+        .hero-container {
+            text-align: center; padding: 80px 20px;
+            max-width: 900px; margin: 0 auto;
+        }
+        .hero-title {
+            font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
     </style>
     """, unsafe_allow_html=True)
 
 def card_container(title, value, delta=None):
-    delta_html = f"<span style='color:#4ade80; font-size:0.8em; font-weight:bold'>▲ {delta}</span>" if delta else ""
+    delta_html = f"<span style='color:#10b981; font-size:0.8em; font-weight:bold'>▲ {delta}</span>" if delta else ""
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">{title}</div>
@@ -139,8 +111,9 @@ def card_container(title, value, delta=None):
 
 def render_hero_section(name):
     st.markdown(f"""
-    <div style="text-align: center; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1)); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
-        <h1 style="margin:0; font-size: 2.2rem; color: #60a5fa;">Xin chào, {name}!</h1>
+    <div style="text-align: center; margin-bottom: 30px; padding: 25px; border: 1px solid rgba(59,130,246,0.2); border-radius: 20px; background: rgba(59,130,246,0.05);">
+        <h1 style="margin:0; font-size: 2.2rem; color: #3b82f6;">Xin chào, {name}!</h1>
+        <p style="margin-top:5px; opacity: 0.8;">Hệ thống quản lý năng lượng thông minh.</p>
     </div>
     """, unsafe_allow_html=True)
 

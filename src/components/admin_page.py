@@ -4,186 +4,164 @@ import json
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
-import time
+import time  # <--- QUAN TRỌNG: Đã thêm thư viện này để fix lỗi
+from datetime import datetime
 from src.backend.auth import load_users, USER_DB_PATH
+from src.backend.history import load_history
 from src.utils.style import card_container
+# Import Logger (Đảm bảo file src/backend/logger.py đã tồn tại)
+try:
+    from src.backend.logger import get_recent_logs, log_info
+except ImportError:
+    # Hàm giả lập nếu chưa có logger
+    def get_recent_logs(limit=10): return []
+    def log_info(msg): pass
 
-# --- HÀM HỖ TRỢ LOGIC ADMIN ---
-def delete_user(username_to_delete):
-    """Xóa user khỏi CSDL"""
+def delete_user(username):
+    """Xóa user và ghi log"""
     users = load_users()
-    if username_to_delete in users:
-        if users[username_to_delete]['role'] == 'admin':
-            return False, "⚠️ Không thể xóa tài khoản Admin quản trị!"
+    if username in users:
+        if users[username]['role'] == 'admin': 
+            return False, "⚠️ Không thể xóa Admin!"
         
-        del users[username_to_delete]
-        with open(USER_DB_PATH, "w") as f:
-            json.dump(users, f)
-        return True, f"✅ Đã xóa người dùng {username_to_delete} thành công!"
-    return False, "❌ Người dùng không tồn tại."
+        del users[username]
+        with open(USER_DB_PATH, "w") as f: 
+            json.dump(users, f, indent=4)
+            
+        log_info(f"Admin đã xóa user: {username}")
+        return True, "✅ Đã xóa thành công!"
+    return False, "❌ Lỗi: User không tồn tại."
 
-def get_system_metrics(users):
-    """Tính toán các chỉ số hệ thống giả lập"""
-    total_users = len(users)
-    active_users = len([u for u in users.values() if u['role'] == 'user'])
-    # Giả lập tải hệ thống (Total Load)
-    system_load = np.random.randint(120, 150) 
-    server_status = "🟢 Ổn định"
-    return total_users, active_users, system_load, server_status
-
-# --- GIAO DIỆN CHÍNH ---
-def render_admin_page():
-    # 1. HEADER
-    st.markdown("## 🛡️ Trung Tâm Quản Trị (Admin Hub)")
-    st.markdown("---")
-
-    # 2. KPI CARDS (Hiển thị số liệu tổng quan)
-    users = load_users()
-    total, active, load, status = get_system_metrics(users)
+def analyze_data(users):
+    """Phân tích dữ liệu user active/inactive"""
+    total = len(users)
+    active_now = 0
+    now = datetime.now()
+    table_data = []
     
-    col1, col2, col3, col4 = st.columns(4)
-    with col1: card_container("Tổng Tài khoản", f"{total}")
-    with col2: card_container("Khách hàng (Active)", f"{active}")
-    with col3: card_container("Tải Hệ thống", f"{load} kW", "Low")
-    with col4: card_container("Trạng thái Server", "Online", "99.9%")
-
-    st.markdown("---")
-
-    # 3. TABS CHỨC NĂNG
-    tab_dashboard, tab_users, tab_settings = st.tabs(["📊 Phân Tích Dữ Liệu", "👥 Quản Lý Người Dùng", "⚙️ Cấu Hình"])
-
-    # === TAB 1: DASHBOARD ANALYTICS ===
-    with tab_dashboard:
-        c1, c2 = st.columns([2, 1])
+    for u, data in users.items():
+        last_login = data.get('last_login', '')
+        status = "⚪ Offline"
         
-        with c1:
-            st.markdown("#### 📈 Xu hướng tiêu thụ toàn hệ thống (7 ngày)")
-            # Giả lập dữ liệu Line Chart
-            days = pd.date_range(start="2025-12-01", periods=7).strftime("%d/%m")
-            loads = np.random.randint(800, 1200, 7)
+        # Logic Active: Đăng nhập trong 24h qua
+        if last_login and last_login != "Chưa đăng nhập":
+            try:
+                dt = datetime.strptime(last_login, "%Y-%m-%d %H:%M:%S")
+                if (now - dt).total_seconds() < 86400:
+                    active_now += 1
+                    status = "🟢 Online"
+                elif (now - dt).days < 7:
+                    status = "🟡 Vắng"
+            except: pass
             
-            fig_line = go.Figure()
-            fig_line.add_trace(go.Scatter(x=days, y=loads, mode='lines+markers', 
-                                        line=dict(color='#00C9FF', width=4), name='Tổng tải'))
-            fig_line.add_trace(go.Scatter(x=days, y=[1000]*7, mode='lines', 
-                                        line=dict(color='red', dash='dash'), name='Ngưỡng cảnh báo'))
-            
-            fig_line.update_layout(
-                height=350, 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                plot_bgcolor='rgba(0,0,0,0)', 
-                font=dict(color='white'),
-                margin=dict(l=0,r=0,t=20,b=0),
-                xaxis=dict(showgrid=False),
-                yaxis=dict(gridcolor='rgba(255,255,255,0.1)')
-            )
-            st.plotly_chart(fig_line, use_container_width=True)
+        table_data.append({
+            "Tài khoản": u,
+            "Vai trò": "👑 Admin" if data.get('role') == 'admin' else "👤 User",
+            "Tên hiển thị": data.get('name', 'N/A'),
+            "Đăng nhập cuối": last_login,
+            "Trạng thái": status
+        })
+    return total, active_now, table_data
 
-        with c2:
-            st.markdown("#### 🏠 Phân bố loại nhà")
-            # Giả lập Pie Chart
-            data_pie = pd.DataFrame({
-                'Type': ['Chung cư', 'Nhà phố', 'Biệt thự'],
-                'Count': [45, 30, 25]
-            })
-            fig_pie = px.pie(data_pie, values='Count', names='Type', hole=0.5, 
-                           color_discrete_sequence=['#3b82f6', '#8b5cf6', '#06b6d4'])
-            fig_pie.update_layout(
-                height=350, 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                font=dict(color='white'),
-                margin=dict(l=0,r=0,t=20,b=0),
-                showlegend=True,
-                legend=dict(orientation="h", y=-0.1)
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
+def render_admin_page():
+    # Header & Nút Làm mới
+    c_head, c_ref = st.columns([5, 1])
+    with c_head:
+        st.markdown("## 🛡️ Quản Trị Hệ Thống")
+    with c_ref:
+        if st.button("🔄 Làm mới", use_container_width=True):
+            st.rerun()
 
-        # Heatmap toàn rộng
-        st.markdown("#### 🔥 Bản đồ nhiệt: Giờ cao điểm trong tuần")
-        hm_z = np.random.rand(7, 24) * 10
-        hm_z[:, 18:22] += 5 # Tăng tải giờ tối
+    # Load dữ liệu
+    users = load_users()
+    total, active, table_data = analyze_data(users)
+
+    # KPI Cards (Giao diện kính)
+    with st.container(border=True):
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: card_container("Tổng User", f"{total}")
+        with c2: card_container("Đang Online", f"{active}", delta="24h qua")
+        with c3: card_container("Server", "Good", delta="CPU 15%")
+        with c4: card_container("AI Model", "94%", delta="Accuracy")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    tabs = st.tabs(["📊 Tổng Quan", "👥 Quản Lý User", "📜 Nhật Ký Hoạt Động"])
+
+    # --- TAB 1: DASHBOARD ---
+    with tabs[0]:
+        c_left, c_right = st.columns([2, 1])
+        with c_left:
+            with st.container(border=True):
+                st.markdown("##### 📈 Truy cập tuần qua")
+                dates = pd.date_range(end=datetime.now(), periods=7).strftime("%d/%m")
+                visits = np.random.randint(50, 200, 7)
+                fig = go.Figure(go.Scatter(x=dates, y=visits, fill='tozeroy', line=dict(color='#8b5cf6')))
+                fig.update_layout(height=300, margin=dict(l=20,r=20,t=20,b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                st.plotly_chart(fig, use_container_width=True)
         
-        fig_hm = go.Figure(data=go.Heatmap(
-            z=hm_z,
-            x=[f"{i}h" for i in range(24)],
-            y=['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-            colorscale='Viridis'
-        ))
-        fig_hm.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), margin=dict(t=0,b=0))
-        st.plotly_chart(fig_hm, use_container_width=True)
+        with c_right:
+            with st.container(border=True):
+                st.markdown("##### 🍰 Thiết bị")
+                fig_pie = px.pie(values=[40, 20, 20, 20], names=['Máy lạnh', 'Tủ lạnh', 'Đèn', 'Khác'],
+                               color_discrete_sequence=['#3b82f6', '#06b6d4', '#8b5cf6', '#64748b'])
+                fig_pie.update_layout(height=300, margin=dict(l=10,r=10,t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.2))
+                st.plotly_chart(fig_pie, use_container_width=True)
 
-    # === TAB 2: QUẢN LÝ USER ===
-    with tab_users:
-        c_search, c_action = st.columns([3, 1])
-        with c_search:
-            st.markdown("### 📋 Danh sách người dùng")
-        with c_action:
-            # Chức năng Xuất CSV
-            user_data_csv = pd.DataFrame(users).T.to_csv().encode('utf-8')
-            st.download_button(
-                label="📥 Xuất Excel (CSV)",
-                data=user_data_csv,
-                file_name='ds_nguoi_dung.csv',
-                mime='text/csv',
-            )
-
-        # Hiển thị bảng User đẹp
-        user_list = []
-        for u, data in users.items():
-            user_list.append({
-                "Username": u,
-                "Họ Tên": data.get("name", "N/A"),
-                "Email": data.get("email", "Chưa cập nhật"),
-                "Vai trò": "👑 Admin" if data.get("role") == "admin" else "👤 User",
-                "Trạng thái": "🟢 Active"
-            })
-        
-        df_users = pd.DataFrame(user_list)
-        st.dataframe(
-            df_users, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config={
-                "Vai trò": st.column_config.TextColumn("Vai trò", width="small"),
-                "Email": st.column_config.TextColumn("Email", width="medium"),
-            }
-        )
-
-        st.divider()
-        st.markdown("### ⚠️ Vùng Nguy Hiểm")
+    # --- TAB 2: USER MANAGEMENT ---
+    with tabs[1]:
         with st.container(border=True):
-            col_del_1, col_del_2 = st.columns([3, 1])
-            with col_del_1:
-                u_del = st.selectbox("Chọn người dùng cần xóa:", 
-                                   [u for u in users.keys() if u != 'admin'])
-            with col_del_2:
-                st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("Xóa Vĩnh Viễn 🗑️", type="primary"):
-                    success, msg = delete_user(u_del)
-                    if success:
-                        st.toast(msg, icon="✅")
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-
-    # === TAB 3: CẤU HÌNH HỆ THỐNG ===
-    with tab_settings:
-        st.info("🔧 Các cài đặt này ảnh hưởng đến mô hình dự báo của toàn bộ người dùng.")
-        
-        c_set_1, c_set_2 = st.columns(2)
-        with c_set_1:
-            st.markdown("#### 🎛️ Tham số Dự báo")
-            st.slider("Ngưỡng cảnh báo tải cao (kW)", 0, 10, 5)
-            st.slider("Độ nhạy của AI (%)", 0, 100, 85)
-            st.toggle("Bật chế độ Tiết kiệm năng lượng khẩn cấp")
-        
-        with c_set_2:
-            st.markdown("#### 📅 Chu kỳ cập nhật")
-            st.selectbox("Tần suất cập nhật dữ liệu", ["Real-time (5s)", "1 Phút", "1 Giờ", "Hàng ngày"])
-            st.checkbox("Tự động sao lưu lịch sử (Auto-backup)", value=True)
+            # Bảng danh sách user
+            st.dataframe(
+                pd.DataFrame(table_data), 
+                use_container_width=True, 
+                hide_index=True,
+                column_config={
+                    "Trạng thái": st.column_config.TextColumn("Status", width="small"),
+                    "Đăng nhập cuối": st.column_config.TextColumn("Last Login", width="medium"),
+                }
+            )
             
-            if st.button("♻️ Khởi động lại Server Giả lập"):
-                with st.spinner("Đang khởi động lại..."):
-                    time.sleep(2)
-                st.success("Hệ thống đã khởi động lại!")
+            st.divider()
+            st.markdown("##### 🗑️ Xóa Tài Khoản")
+            c_del, c_btn = st.columns([3, 1])
+            with c_del:
+                # Lọc bỏ admin ra khỏi danh sách xóa
+                u_del = st.selectbox("Chọn user:", [u for u in users if u != 'admin'], label_visibility="collapsed")
+            with c_btn:
+                if st.button("Xóa User", type="primary", use_container_width=True):
+                    if u_del:
+                        ok, msg = delete_user(u_del)
+                        if ok:
+                            st.success(msg)
+                            time.sleep(1.5) # Dừng 1.5s để hiện thông báo rồi mới reload
+                            st.rerun()
+                        else: st.error(msg)
+                    else:
+                        st.warning("Không có user nào để xóa.")
+
+    # --- TAB 3: SYSTEM LOGS ---
+    with tabs[2]:
+        st.info("Nhật ký ghi lại mọi hoạt động Đăng nhập, Đăng ký và Dự báo AI.")
+        
+        raw_logs = get_recent_logs(limit=50)
+        log_data = []
+        
+        for line in raw_logs:
+            try:
+                # Parse log: "[INFO] 2025... - Message"
+                if " - " in line:
+                    parts = line.strip().split(" - ", 1)
+                    meta = parts[0].split("] ", 1)
+                    level = meta[0].replace("[", "")
+                    timestamp = meta[1]
+                    message = parts[1]
+                    log_data.append({"Thời gian": timestamp, "Cấp độ": level, "Nội dung": message})
+            except: continue
+                
+        if log_data:
+            st.dataframe(pd.DataFrame(log_data), use_container_width=True, hide_index=True, column_config={
+                "Cấp độ": st.column_config.TextColumn("Loại", width="small"),
+                "Nội dung": st.column_config.TextColumn("Chi tiết hành động", width="large"),
+            })
+        else:
+            st.warning("Chưa có dữ liệu nhật ký nào.")

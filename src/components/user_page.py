@@ -6,6 +6,8 @@ import time
 from src.backend.history import save_history, load_history
 from src.backend.logic_engine import calculate_evn_bill
 from src.utils.style import card_container, render_hero_section
+# IMPORT LOGGER
+from src.backend.logger import log_info
 
 def calculate_forecast(ac, fridge, mem, house, settings):
     base = 1.5
@@ -18,7 +20,7 @@ def calculate_forecast(ac, fridge, mem, house, settings):
 
 def render_user_page(username, name):
     render_hero_section(name)
-    tab1, tab2, tab3 = st.tabs(["🚀 Điều Khiển", "📊 Xếp Hạng", "📜 Lịch Sử"])
+    tab1, tab2, tab3 = st.tabs(["🚀 Điều Khiển & Dự Báo", "📊 Xếp Hạng", "📜 Lịch Sử"])
     
     with tab1:
         c1, c2 = st.columns([2, 1])
@@ -34,12 +36,16 @@ def render_user_page(username, name):
                 ac_n = st.number_input("Số AC", 0, 5, 1)
                 fr_n = st.number_input("Số Tủ lạnh", 0, 3, 1)
                 mem = st.slider("Người", 1, 10, 2)
+                
                 if st.button("🔄 Chạy Dự Báo", type="primary", use_container_width=True):
                     with st.spinner("AI Computing..."): time.sleep(0.5)
                     hourly, total = calculate_forecast(ac_n, fr_n, mem, house, {'ac': s_ac, 'lights': s_li, 'water': s_wa})
                     bill, _ = calculate_evn_bill(total * 30)
                     st.session_state['res'] = {'h': hourly, 't': total, 'b': bill}
+                    
                     save_history(username, f"{house}", total, bill/30)
+                    # GHI LOG HÀNH ĐỘNG
+                    log_info(f"User '{username}' đã chạy dự báo AI ({total:.2f} kWh).")
 
         with c1:
             if 'res' in st.session_state:
@@ -48,13 +54,14 @@ def render_user_page(username, name):
                 with k1: card_container("Tiêu thụ ngày", f"{r['t']:.1f} kWh")
                 with k2: card_container("Chi phí ngày", f"{int(r['b']/30):,} đ")
                 with k3: card_container("Dự báo tháng", f"{int(r['b']):,} đ")
-                fig = go.Figure(go.Scatter(x=np.arange(24), y=r['h'], fill='tozeroy', line=dict(color='#3b82f6')))
+                fig = go.Figure(go.Scatter(x=np.arange(24), y=r['h'], fill='tozeroy', line=dict(color='#00C9FF')))
                 fig.update_layout(title="Biểu đồ tải 24h", height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=0,r=0,t=30,b=0))
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                st.info("👈 Nhập thông tin và bấm Chạy Dự Báo.")
+                st.info("👈 Nhập thông tin và bấm 'Chạy Dự Báo' để bắt đầu.")
 
     with tab2:
+        st.subheader("🏆 Xếp Hạng")
         st.dataframe(pd.DataFrame([["🥇", "User A", 950], ["🥈", "User B", 890], ["🥉", name, 850]], columns=["Rank", "User", "Score"]), use_container_width=True)
 
     with tab3:
