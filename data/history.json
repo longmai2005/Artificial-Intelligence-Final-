@@ -23,6 +23,12 @@
             "inputs": "Chung c\u01b0",
             "kwh": 17.6,
             "cost": 46050
+        },
+        {
+            "timestamp": "2025-12-11 23:25:03",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 626.4,
+            "cost": 1691586
         }
     ],
     "khtran": [
