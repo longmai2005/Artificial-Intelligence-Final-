@@ -1,0 +1,28 @@
+
+======================================================================
+POWER CONSUMPTION FORECASTING - FINAL REPORT
+======================================================================
+
+🏆 BEST MODEL: LightGBM
+======================================================================
+
+📊 PERFORMANCE METRICS:
+   • MAE (Mean Absolute Error):     0.0173 kW
+   • RMSE (Root Mean Squared Error): 0.0277 kW
+   • R² Score:                       0.9990
+   • MAPE (Mean Absolute % Error):   2.93%
+
+💡 INTERPRETATION:
+   • R² = 0.9990 → Model explains 99.9% of variance
+   • Average prediction error: 0.0173 kW
+   • MAPE of 2.93% indicates good forecasting accuracy
+
+📈 ALL MODELS RANKING:
+                     MAE      RMSE        R2       MAPE
+LightGBM        0.017334  0.027746  0.999041   2.925651
+Naive           0.693222  1.076321 -0.442958  56.883620
+Moving Average  0.714506  1.116523 -0.552764  52.580605
+
+======================================================================
+Generated: 2025-12-10 16:37:14
+======================================================================
