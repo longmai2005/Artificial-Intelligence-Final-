@@ -1,18 +1,18 @@
 import streamlit as st
 import time
 
+# Import hàm AI (Nếu chưa có thì dùng giả lập)
 try:
     from src.backend.ai_engine import ask_gemini
 except ImportError:
-    def ask_gemini(p): return "Chế độ Demo (Chưa có API Key): " + p
+    def ask_gemini(p): return "Chế độ Demo: " + p
 
 def render_floating_chatbot():
     """
-    Hiển thị Chatbot bong bóng (Floating Bubble)
-    Đã fix lỗi hiển thị thành thanh ngang dài.
+    Hiển thị Chatbot bong bóng (Floating Bubble) chuẩn UI.
     """
     
-    # --- CSS CƯỠNG CHẾ GIAO DIỆN NÚT TRÒN ---
+    # --- CSS QUAN TRỌNG ĐỂ FIX LỖI THANH NGANG ---
     st.markdown("""
     <style>
         /* 1. Container bao ngoài nút Popover */
@@ -21,8 +21,12 @@ def render_floating_chatbot():
             bottom: 30px !important;
             right: 30px !important;
             z-index: 99999 !important;
-            width: auto !important; /* Quan trọng: Co lại vừa nút bấm */
+            
+            /* DÒNG NÀY SỬA LỖI THANH NGANG: */
+            width: auto !important;
             height: auto !important;
+            min-width: 0 !important;
+            
             background-color: transparent !important;
             border: none !important;
         }
@@ -31,27 +35,32 @@ def render_floating_chatbot():
         div[data-testid="stPopover"] > button {
             width: 60px !important;
             height: 60px !important;
+            min-width: 60px !important; /* Đảm bảo tròn */
             border-radius: 50% !important;
+            
             background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%) !important;
             border: none !important;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+            
+            /* Căn giữa icon */
             padding: 0 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            
             transition: transform 0.2s ease !important;
         }
 
-        /* Icon bên trong nút */
+        /* Icon trong nút */
         div[data-testid="stPopover"] > button span {
             font-size: 30px !important;
             color: white !important;
         }
 
-        /* Hiệu ứng khi di chuột */
+        /* Hiệu ứng di chuột */
         div[data-testid="stPopover"] > button:hover {
             transform: scale(1.1) !important;
-            box-shadow: 0 0 25px rgba(0, 201, 255, 0.7) !important;
+            box-shadow: 0 0 25px rgba(0, 201, 255, 0.8) !important;
         }
 
         /* 3. Khung chat khi mở ra */
@@ -62,14 +71,13 @@ def render_floating_chatbot():
             max-height: 80vh !important;
             border-radius: 16px !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
-            background-color: #111827 !important; /* Nền tối */
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+            background-color: #111827 !important;
             padding: 0 !important;
             overflow: hidden !important;
         }
-
-        /* 4. Tinh chỉnh tin nhắn bên trong */
-        .stChatMessage { background-color: transparent !important; }
+        
+        /* 4. Tinh chỉnh tin nhắn */
+        .stChatMessage { background: transparent !important; }
         
         /* Tin nhắn User (Phải) */
         div[data-testid="stChatMessage"]:nth-child(odd) {
@@ -115,7 +123,7 @@ def render_floating_chatbot():
             st.session_state.chat_history = [{"role": "assistant", "content": "👋 Xin chào! Tôi có thể giúp gì cho bạn?"}]
 
         # Container chat
-        chat_container = st.container(height=360)
+        chat_container = st.container(height=300)
         with chat_container:
             for msg in st.session_state.chat_history:
                 # Avatar text thay vì ảnh
