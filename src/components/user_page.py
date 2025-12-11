@@ -9,6 +9,7 @@ from src.backend.history import save_history, load_history
 from src.backend.logic_engine import calculate_evn_bill
 from src.backend.predictor import EnergyPredictor
 from src.utils.style import card_container, render_hero_section
+
 # Khởi tạo predictor (cache để không load lại nhiều lần)
 @st.cache_resource
 def get_predictor():
@@ -167,7 +168,7 @@ def render_user_page(username, name):
         "📜 Lịch sử Dự đoán",
         "🏆 Thống kê"
     ])
-
+    
     # ==================== TAB 1: DỰ ĐOÁN ====================
     with tab1:
         st.markdown("### 🏠 Nhập Thông tin Hộ Gia đình")
