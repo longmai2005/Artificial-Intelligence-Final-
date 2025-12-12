@@ -3,6 +3,13 @@
         "password": "123",
         "role": "admin",
         "name": "Administrator",
-        "last_login": "2025-12-11 23:34:42"
+        "last_login": "2025-12-12 08:34:58"
+    },
+    "longmai": {
+        "password": "2005",
+        "role": "user",
+        "name": "Long Mai",
+        "email": "long.mai230205@vnuk.edu.vn",
+        "last_login": "2025-12-12 08:40:48"
     }
 }

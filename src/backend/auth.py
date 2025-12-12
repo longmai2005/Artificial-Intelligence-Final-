@@ -3,112 +3,105 @@ import os
 import smtplib
 import random
 import string
-from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import streamlit as st
-# IMPORT LOGGER
-from src.backend.logger import log_info, log_warning, log_error
 
 USER_DB_PATH = "data/users.json"
+
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "longmai0520@gmail.com"
-SENDER_PASSWORD = "fyxl jibq ohmi xeio"
+SENDER_EMAIL = "longmai0520@gmail.com"  
+SENDER_PASSWORD = "fyxl jibq ohmi xeio" 
 
 def load_users():
     if not os.path.exists(USER_DB_PATH):
-        default = {
-            "admin": {
-                "password": "123", 
-                "role": "admin", 
-                "name": "Administrator", 
-                "email": "admin@test.com",
-                "last_login": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+        default_users = {
+            "admin": {"password": "123", "role": "admin", "name": "Administrator", "email": "admin@example.com"},
+            "user": {"password": "123", "role": "user", "name": "User Demo", "email": "user@example.com"}
         }
-        with open(USER_DB_PATH, "w") as f: json.dump(default, f)
-        log_info("Khởi tạo database người dùng mặc định.") # LOG
-        return default
-    try:
-        with open(USER_DB_PATH, "r") as f: return json.load(f)
-    except: return {}
-
-def save_db(users):
-    with open(USER_DB_PATH, "w") as f:
-        json.dump(users, f, indent=4)
+        os.makedirs(os.path.dirname(USER_DB_PATH), exist_ok=True)
+        with open(USER_DB_PATH, "w") as f:
+            json.dump(default_users, f)
+        return default_users
+    
+    with open(USER_DB_PATH, "r") as f:
+        return json.load(f)
 
 def save_user(username, password, name, email=""):
     users = load_users()
-    username = username.strip()
-    if username in users: 
-        log_warning(f"Đăng ký thất bại: User '{username}' đã tồn tại.") # LOG
+    if username in users:
         return False
     
     users[username] = {
-        "password": password.strip(),
+        "password": password,
         "role": "user",
-        "name": name.strip(),
-        "email": email.strip(),
-        "last_login": "Chưa đăng nhập"
+        "name": name,
+        "email": email
     }
-    save_db(users)
-    log_info(f"Người dùng mới đăng ký: {username} ({email})") # LOG
+    with open(USER_DB_PATH, "w") as f:
+        json.dump(users, f)
     return True
 
 def authenticate(username, password):
     users = load_users()
-    username = username.strip()
-    password = password.strip()
-    
-    if username not in users:
-        log_warning(f"Đăng nhập thất bại: User '{username}' không tồn tại.") # LOG
-        return "NOT_FOUND"
-    
-    if users[username]["password"] == password:
-        # Update last login
-        users[username]["last_login"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        save_db(users)
-        log_info(f"User '{username}' đã đăng nhập thành công.") # LOG THÀNH CÔNG
+    if username in users and users[username]["password"] == password:
         return users[username]
-    
-    log_warning(f"Đăng nhập thất bại: User '{username}' sai mật khẩu.") # LOG SAI PASS
-    return "WRONG_PASS"
+    return None
 
 def check_user_exists(username, email):
     users = load_users()
-    for u, d in users.items():
-        if u == username.strip() or d.get('email') == email.strip(): return True
+    for u, data in users.items():
+        if u == username or data.get('email') == email:
+            return True
     return False
 
 def reset_password(username, new_password):
     users = load_users()
-    username = username.strip()
     if username in users:
-        users[username]["password"] = new_password.strip()
-        save_db(users)
-        log_info(f"User '{username}' đã đổi mật khẩu.") # LOG
+        users[username]["password"] = new_password
+        with open(USER_DB_PATH, "w") as f:
+            json.dump(users, f)
         return True
     return False
 
+# --- LOGIC OTP & EMAIL ---
+
 def generate_otp():
+    """Tạo mã OTP 6 số ngẫu nhiên"""
     return ''.join(random.choices(string.digits, k=6))
 
 def send_email_otp(receiver_email, otp_code):
+    """Gửi email chứa OTP"""
+    subject = "🔑 Mã xác thực đăng ký Smart Energy"
+    body = f"""
+    <html>
+    <body>
+        <h2 style="color: #00C9FF;">Xác thực tài khoản Smart Energy Saver</h2>
+        <p>Xin chào,</p>
+        <p>Cảm ơn bạn đã đăng ký. Đây là mã xác thực (OTP) của bạn:</p>
+        <h1 style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; display: inline-block; letter-spacing: 5px;">{otp_code}</h1>
+        <p>Mã này sẽ hết hạn trong 5 phút.</p>
+        <p><i>(Email được gửi tự động từ hệ thống Smart Energy Saver)</i></p>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = receiver_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'html'))
+
     try:
-        msg = MIMEMultipart()
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = receiver_email
-        msg['Subject'] = "Mã xác thực Smart Energy"
-        msg.attach(MIMEText(f"Mã OTP của bạn là: {otp_code}", 'plain'))
-        
+        # Thử kết nối đến Server Gmail
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
+        # Đăng nhập bằng Mật khẩu ứng dụng (App Password)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
         server.quit()
-        log_info(f"Gửi OTP thành công tới {receiver_email}") # LOG
-        return True
+        return True # Gửi thành công
     except Exception as e:
-        log_error(f"Gửi email thất bại tới {receiver_email}: {str(e)}") # LOG LỖI
-        return False
+        print(f"Lỗi gửi email: {e}")
+        return False # Gửi thất bại

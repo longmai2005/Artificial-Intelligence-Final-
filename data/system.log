@@ -9,3 +9,11 @@
 [INFO] 2025-12-11 23:09:34 - User 'admin' đã đăng nhập thành công.
 [INFO] 2025-12-11 23:29:00 - User 'admin' đã đăng nhập thành công.
 [INFO] 2025-12-11 23:34:42 - User 'admin' đã đăng nhập thành công.
+[INFO] 2025-12-12 08:34:58 - User 'admin' đã đăng nhập thành công.
+[WARN] 2025-12-12 08:35:17 - Đăng nhập thất bại: User 'longmai' không tồn tại.
+[WARN] 2025-12-12 08:35:21 - Đăng nhập thất bại: User 'longmai' không tồn tại.
+[WARN] 2025-12-12 08:35:22 - Đăng nhập thất bại: User 'longmai' không tồn tại.
+[WARN] 2025-12-12 08:35:25 - Đăng nhập thất bại: User 'longmai' không tồn tại.
+[INFO] 2025-12-12 08:40:25 - Gửi OTP thành công tới long.mai230205@vnuk.edu.vn
+[INFO] 2025-12-12 08:40:37 - Người dùng mới đăng ký: longmai (long.mai230205@vnuk.edu.vn)
+[INFO] 2025-12-12 08:40:48 - User 'longmai' đã đăng nhập thành công.
