@@ -1,1 +1,15 @@
-{"admin": {"password": "123", "role": "admin", "name": "Administrator"}, "longmai": {"password": "2005", "role": "user", "name": "Mai Ph\u01b0\u1edbc Long"}, "khtran": {"password": "0601", "role": "user", "name": "Nguy\u1ec5n Kh\u00e1nh Tr\u00e2n", "email": "minhkhang578@gmail.com"}, "David": {"password": "1234", "role": "user", "name": "David", "email": "long.mai230205@vnuk.edu.vn"}}
+{
+    "admin": {
+        "password": "123",
+        "role": "admin",
+        "name": "Administrator",
+        "last_login": "2025-12-12 08:34:58"
+    },
+    "longmai": {
+        "password": "2005",
+        "role": "user",
+        "name": "Long Mai",
+        "email": "long.mai230205@vnuk.edu.vn",
+        "last_login": "2025-12-12 08:40:48"
+    }
+}

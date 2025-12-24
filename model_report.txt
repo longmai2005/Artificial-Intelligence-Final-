@@ -1,0 +1,40 @@
+
+======================================================================
+POWER CONSUMPTION FORECASTING - FINAL REPORT (FIXED VERSION)
+======================================================================
+
+🏆 BEST MODEL: Random Forest
+======================================================================
+
+📊 PERFORMANCE METRICS (kW-level, per minute):
+   • MAE (Mean Absolute Error):     0.0159 kW
+   • RMSE (Root Mean Squared Error): 0.0275 kW
+   • R² Score:                       0.9991
+   • MAPE (Mean Absolute % Error):   2.51%
+
+📈 MONTHLY kWh METRICS:
+   • Monthly Error (MAE):            2.27 kWh
+   • This represents the average monthly prediction error
+
+💡 INTERPRETATION:
+   • R² = 0.9991 → Model explains 99.9% of variance
+   • Average prediction error: 0.0159 kW per minute
+   • MAPE of 2.51% indicates forecasting accuracy
+
+⚠️  CRITICAL NOTES:
+   • Data sampling: 1 minute per sample
+   • Global_active_power unit: kW (kilowatts)
+   • To convert to kWh: multiply by Δt = 1/60 hours
+   • Monthly aggregation: resample to 'M' and sum
+   • Feature 'energy_per_day_kwh' excluded to prevent data leakage
+
+📈 ALL MODELS RANKING:
+                     MAE      RMSE        R2        MAPE  Monthly_Error
+Random Forest   0.015871  0.027500  0.999058    2.509693       2.270351
+LightGBM        0.018762  0.029042  0.998949    3.091007       2.567069
+Moving Average  0.871600  1.040067 -0.347389  219.048888     360.747234
+Naive           0.693222  1.076321 -0.442958   56.883620     407.358013
+
+======================================================================
+Generated: 2025-12-12 09:22:03
+======================================================================
