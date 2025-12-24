@@ -1,3 +1,8 @@
+"""
+User Page - Smart User Input với Improved Predictor
+Hiển thị confidence, blend methodology, device breakdown
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,182 +10,142 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
 import time
+
 from src.backend.history import save_history, load_history
 from src.backend.logic_engine import calculate_evn_bill
 from src.backend.predictor import EnergyPredictor
-from src.utils.style import card_container, render_hero_section
-# IMPORT LOGGER
-from src.backend.logger import log_info
+from src.backend.data_loader import load_dataset
+from src.utils.style import render_hero_section
 
-# Khởi tạo predictor (cache để không load lại nhiều lần)
 @st.cache_resource
 def get_predictor():
     return EnergyPredictor()
 
-def generate_ai_insights(total_kwh, breakdown, user_inputs):
-    """Tạo phân tích AI từ dữ liệu dự đoán"""
-    insights = []
-    
-    # 1. Phân tích tổng quan
-    if total_kwh > 400:
-        level = "🔴 RẤT CAO"
-        status = "critical"
-    elif total_kwh > 300:
-        level = "🟡 CAO"
-        status = "warning"
-    elif total_kwh > 200:
-        level = "🟢 TRUNG BÌNH"
-        status = "normal"
-    else:
-        level = "✅ THẤP"
-        status = "good"
-    
-    insights.append({
-        "title": "📊 Đánh giá Tổng quan",
-        "content": f"Mức tiêu thụ điện của bạn: **{level}** ({total_kwh:.0f} kWh/tháng)",
-        "type": status
-    })
-    
-    # 2. Phân tích thiết bị tiêu thụ nhiều nhất
-    max_device = max(breakdown.items(), key=lambda x: x[1])
-    insights.append({
-        "title": "⚡ Thiết bị tiêu thụ nhiều nhất",
-        "content": f"**{max_device[0]}** chiếm {max_device[1]/total_kwh*100:.1f}% ({max_device[1]:.0f} kWh/tháng)",
-        "type": "info"
-    })
-    
-    # 3. So sánh với trung bình
-    avg_household = 250  # kWh trung bình
-    diff_percent = ((total_kwh - avg_household) / avg_household) * 100
-    
-    if diff_percent > 0:
-        insights.append({
-            "title": "📈 So sánh với Hộ gia đình Trung bình",
-            "content": f"Bạn đang tiêu thụ **cao hơn {diff_percent:.0f}%** so với hộ gia đình trung bình ({avg_household} kWh/tháng)",
-            "type": "warning"
-        })
-    else:
-        insights.append({
-            "title": "📉 So sánh với Hộ gia đình Trung bình",
-            "content": f"Tuyệt vời! Bạn đang tiết kiệm **{abs(diff_percent):.0f}%** so với trung bình ({avg_household} kWh/tháng)",
-            "type": "success"
-        })
-    
-    return insights
+@st.cache_data
+def get_historical_data():
+    """Load dữ liệu lịch sử - lấy sample lớn hơn để có pattern tốt"""
+    return load_dataset(nrows=200000)  # 200k điểm ≈ 138 ngày
 
-def generate_saving_recommendations(breakdown, user_inputs, total_kwh):
-    """Tạo đề xuất tiết kiệm dựa trên phân tích"""
-    recommendations = []
+
+def render_confidence_indicator(confidence):
+    """Hiển thị độ tin cậy bằng color-coded badge"""
     
-    # Phân tích từng thiết bị
-    for device, kwh in breakdown.items():
-        percent = (kwh / total_kwh) * 100
+    if confidence >= 0.7:
+        color = "🟢"
+        text = "CAO"
+        style = "success"
+    elif confidence >= 0.5:
+        color = "🟡"
+        text = "TRUNG BÌNH"
+        style = "warning"
+    else:
+        color = "🔴"
+        text = "THẤP"
+        style = "error"
+    
+    st.markdown(f"""
+    <div style="
+        background: {'#d4edda' if style=='success' else '#fff3cd' if style=='warning' else '#f8d7da'};
+        border: 1px solid {'#c3e6cb' if style=='success' else '#ffeeba' if style=='warning' else '#f5c6cb'};
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    ">
+        <strong>{color} Độ tin cậy: {text}</strong><br>
+        <span style="font-size: 24px; font-weight: bold;">{confidence*100:.0f}%</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_methodology_explanation():
+    """Giải thích phương pháp dự đoán"""
+    
+    with st.expander("📚 Phương pháp Dự đoán (Nhấn để xem chi tiết)"):
+        st.markdown("""
+        ### 🧠 Phương pháp Kết hợp Thông minh (Hybrid Approach)
         
-        if device == "Máy lạnh" and percent > 40:
-            saving_kwh = kwh * 0.2  # Tiết kiệm 20%
-            saving_money = saving_kwh * 2500
-            recommendations.append({
-                "device": "❄️ Máy lạnh",
-                "current": f"{kwh:.0f} kWh ({percent:.0f}%)",
-                "issue": "Tiêu thụ quá cao - chiếm gần nửa hóa đơn",
-                "actions": [
-                    "Đặt nhiệt độ 26-27°C thay vì 22-24°C",
-                    "Bật chế độ tiết kiệm điện (Eco mode)",
-                    "Vệ sinh lưới lọc gió mỗi 2 tuần",
-                    "Tắt máy khi ra ngoài >30 phút"
-                ],
-                "potential_saving": f"Tiết kiệm: ~{saving_kwh:.0f} kWh ≈ {saving_money:,.0f}đ/tháng",
-                "priority": "high"
-            })
+        Hệ thống sử dụng **2 phương pháp bổ trợ** để đưa ra dự đoán chính xác nhất:
         
-        elif device == "Tủ lạnh" and percent > 15:
-            saving_kwh = kwh * 0.15
-            saving_money = saving_kwh * 2500
-            recommendations.append({
-                "device": "🧊 Tủ lạnh",
-                "current": f"{kwh:.0f} kWh ({percent:.0f}%)",
-                "issue": "Hoạt động không tối ưu",
-                "actions": [
-                    "Không để thức ăn nóng vào tủ",
-                    "Kiểm tra gioăng cao su cửa",
-                    "Để tủ cách tường 10cm để thoát nhiệt",
-                    "Rã đông định kỳ (nếu không có tự động)"
-                ],
-                "potential_saving": f"Tiết kiệm: ~{saving_kwh:.0f} kWh ≈ {saving_money:,.0f}đ/tháng",
-                "priority": "medium"
-            })
+        #### 1️⃣ Pattern Thời gian (Time-based Pattern) - R² = 99.91%
+        - ✅ **Chính xác cao**: Học từ 4 năm dữ liệu thực tế
+        - ✅ Phản ánh đúng: Giờ cao điểm, thấp điểm
+        - ✅ Có mùa (seasonal): Mùa hè, đông khác nhau
         
-        elif device == "Chiếu sáng" and percent > 10:
-            saving_kwh = kwh * 0.3
-            saving_money = saving_kwh * 2500
-            recommendations.append({
-                "device": "💡 Chiếu sáng",
-                "current": f"{kwh:.0f} kWh ({percent:.0f}%)",
-                "issue": "Có thể tối ưu hơn",
-                "actions": [
-                    "Thay bóng LED tiết kiệm năng lượng",
-                    "Tắt đèn khi không dùng",
-                    "Sử dụng ánh sáng tự nhiên ban ngày",
-                    "Lắp cảm biến chuyển động cho hành lang"
-                ],
-                "potential_saving": f"Tiết kiệm: ~{saving_kwh:.0f} kWh ≈ {saving_money:,.0f}đ/tháng",
-                "priority": "low"
-            })
-    
-    # Đề xuất chung
-    if user_inputs['hours_per_day'] > 12:
-        recommendations.append({
-            "device": "🏠 Thói quen chung",
-            "current": f"{user_inputs['hours_per_day']} giờ/ngày",
-            "issue": "Thời gian sử dụng thiết bị quá dài",
-            "actions": [
-                "Tắt thiết bị khi không sử dụng",
-                "Rút phích cắm các thiết bị chờ (standby)",
-                "Sử dụng ổ cắm thông minh có hẹn giờ",
-                "Tập trung sinh hoạt vào 1-2 phòng buổi tối"
-            ],
-            "potential_saving": "Có thể tiết kiệm 10-15% tổng hóa đơn",
-            "priority": "high"
-        })
-    
-    # Đề xuất dựa trên diện tích
-    if user_inputs['area_m2'] > 80 and user_inputs['num_ac'] < 2:
-        recommendations.append({
-            "device": "📐 Diện tích nhà",
-            "current": f"{user_inputs['area_m2']}m² - {user_inputs['num_ac']} máy lạnh",
-            "issue": "Máy lạnh có thể phải hoạt động quá tải",
-            "actions": [
-                "Cân nhắc thêm 1 máy lạnh công suất nhỏ",
-                "Cách nhiệt tốt hơn (rèm, cửa)",
-                "Đóng cửa phòng đang làm mát"
-            ],
-            "potential_saving": "Tối ưu hiệu quả, giảm hao mòn máy",
-            "priority": "medium"
-        })
-    
-    return recommendations
+        #### 2️⃣ Ước tính Thiết bị (Device-based Estimation)
+        - 📊 Dựa trên nghiên cứu thực tế của EVN
+        - 🔌 Tính toán từng thiết bị cụ thể
+        - 🏠 Điều chỉnh theo đặc điểm hộ gia đình
+        
+        #### 🎯 Kết hợp (Blend)
+        
+        Hệ thống **tự động cân trọng số** giữa 2 phương pháp:
+        
+        - Nếu bạn **gần mức trung bình** → Tin **Pattern** nhiều hơn (70%)
+        - Nếu bạn **khác biệt** → Tin **Thiết bị** nhiều hơn (60%)
+        
+        #### ⚙️ Calibration
+        
+        - Điều chỉnh dựa trên kinh nghiệm thực tế
+        - Giảm 10% vì ước tính thường cao hơn
+        
+        #### 🎯 Confidence (Độ tin cậy)
+        
+        Cao khi:
+        - ✅ Số người: 2-4 (phổ biến)
+        - ✅ Diện tích: 40-80m²
+        - ✅ Có đủ thiết bị thông dụng
+        
+        Thấp khi:
+        - ⚠️ Số người < 1 hoặc > 6
+        - ⚠️ Diện tích < 20m² hoặc > 150m²
+        - ⚠️ Thiếu thông tin thiết bị
+        
+        → **Kết quả cuối cùng**: Prediction ± Margin (dựa trên confidence)
+        """)
 
 def render_user_page(username, name):
     render_hero_section(name)
-    tab1, tab2, tab3 = st.tabs(["🚀 Điều Khiển", "📊 Xếp Hạng", "📜 Lịch Sử"])
+
+    # Hiển thị disclaimer ngay đầu
+    st.info("""
+    **💡 Lưu ý quan trọng**
     
+    Hệ thống sử dụng **phương pháp kết hợp thông minh**:
+    - ✅ Pattern thời gian (chính xác 99.91%)
+    - ✅ Ước tính thiết bị (dựa trên nghiên cứu EVN)
+    
+    Kết quả có **độ tin cậy cao** với hộ gia đình thông thường, nhưng vẫn là **ước tính** chứ không phải đo lường thực tế.
+    """)
+    
+    # Tabs
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🔮 Dự đoán", 
+        "💡 Tiết kiệm",
+        "📜 Lịch sử",
+        "📊 Thống kê"
+    ])
+    
+    # ==================== TAB 1: DỰ ĐOÁN ====================
     with tab1:
-        st.markdown("### 🏠 Nhập Thông tin Hộ Gia đình")
+        st.markdown("### 🏠 Dự đoán Tiêu thụ Điện")
         
+        render_methodology_explanation()
+
         col_input, col_result = st.columns([1, 1.2])
         
         with col_input:
             with st.container(border=True):
-                st.markdown("#### 📝 Thông tin cơ bản")
+
+                st.markdown("#### 📋 Thông tin Hộ gia đình")
                 
                 num_people = st.number_input(
-                    "👥 Số người trong gia đình",
+                    "👥 Số người",
                     min_value=1, max_value=10, value=3,
                     help="Số người sinh sống thường xuyên"
                 )
                 
                 area_m2 = st.number_input(
-                    "📐 Diện tích nhà (m²)",
+                    "📐 Diện tích (m²)",
                     min_value=20, max_value=300, value=60,
                     help="Tổng diện tích sàn"
                 )
@@ -188,41 +153,343 @@ def render_user_page(username, name):
                 house_type = st.selectbox(
                     "🏘️ Loại nhà",
                     ["Chung cư", "Nhà phố", "Biệt thự"],
-                    help="Loại hình nhà ở"
+                    index=1,
+                    help="Chung cư: Cách nhiệt tốt, Biệt thự: Diện tích lớn"
                 )
             
             with st.container(border=True):
-                s_ac = st.toggle("❄️ Máy lạnh", True)
-                s_li = st.toggle("💡 Đèn", True)
-                s_wa = st.toggle("🔥 Nước nóng", True)
-                st.divider()
-                st.caption("Thông số nhà")
-                house = st.selectbox("Loại nhà", ["Chung cư", "Nhà phố", "Biệt thự"])
-                ac_n = st.number_input("Số AC", 0, 5, 1)
-                fr_n = st.number_input("Số Tủ lạnh", 0, 3, 1)
-                mem = st.slider("Người", 1, 10, 2)
-                if st.button("🔄 Chạy Dự Báo", type="primary", use_container_width=True):
-                    with st.spinner("AI Computing..."): time.sleep(0.5)
-                    hourly, total = calculate_forecast(ac_n, fr_n, mem, house, {'ac': s_ac, 'lights': s_li, 'water': s_wa})
-                    bill, _ = calculate_evn_bill(total * 30)
-                    st.session_state['res'] = {'h': hourly, 't': total, 'b': bill}
-                    save_history(username, f"{house}", total, bill/30)
-
-        with c1:
-            if 'res' in st.session_state:
-                r = st.session_state['res']
-                k1, k2, k3 = st.columns(3)
-                with k1: card_container("Tiêu thụ ngày", f"{r['t']:.1f} kWh")
-                with k2: card_container("Chi phí ngày", f"{int(r['b']/30):,} đ")
-                with k3: card_container("Dự báo tháng", f"{int(r['b']):,} đ")
-                fig = go.Figure(go.Scatter(x=np.arange(24), y=r['h'], fill='tozeroy', line=dict(color='#3b82f6')))
-                fig.update_layout(title="Biểu đồ tải 24h", height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=0,r=0,t=30,b=0))
-                st.plotly_chart(fig, use_container_width=True)
+                st.markdown("#### 🔌 Thiết bị Điện")
+                
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    num_ac = st.number_input("❄️ Máy lạnh", 0, 5, 1)
+                    num_tv = st.number_input("📺 TV", 0, 5, 1)
+                    num_fridge = st.number_input("🧊 Tủ lạnh", 0, 3, 1)
+                
+                with col_b:
+                    num_washer = st.number_input("🌀 Máy giặt", 0, 2, 1)
+                    num_water_heater = st.number_input("🚿 Bình nóng lạnh", 0, 2, 0)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            predict_btn = st.button(
+                "🚀 Dự đoán Thông minh",
+                type="primary",
+                use_container_width=True
+            )
+        
+        with col_result:
+            if predict_btn:
+                with st.spinner("🤖 AI đang phân tích..."):
+                    time.sleep(1.5)
+                    
+                    try:
+                        predictor = get_predictor()
+                        history_df = get_historical_data()
+                        
+                        # Lấy 1440 điểm gần nhất (24h)
+                        input_df = history_df.tail(1440)
+                        
+                        user_params = {
+                            'num_people': num_people,
+                            'area_m2': area_m2,
+                            'house_type': house_type,
+                            'num_ac': num_ac,
+                            'num_fridge': num_fridge,
+                            'num_tv': num_tv,
+                            'num_washer': num_washer,
+                            'num_water_heater': num_water_heater
+                        }
+                        
+                        # Dự đoán
+                        result = predictor.predict_user_consumption(
+                            input_df,
+                            user_params,
+                            days=30
+                        )
+                        
+                        total_kwh = result['total_kwh']
+                        total_cost, cost_breakdown = calculate_evn_bill(total_kwh)
+                        
+                        # Lưu session
+                        st.session_state['prediction_result'] = {
+                            'result': result,
+                            'user_params': user_params,
+                            'total_cost': total_cost,
+                            'cost_breakdown': cost_breakdown,
+                            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        
+                        # Lưu history
+                        save_history(
+                            username,
+                            input_data=f"{house_type} - {num_people} người - {area_m2}m²",
+                            result_kwh=total_kwh,
+                            total_cost=total_cost
+                        )
+                        
+                        st.success("✅ Dự đoán hoàn tất!")
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"❌ Lỗi: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+            
+            # Hiển thị kết quả
+            if 'prediction_result' in st.session_state:
+                pred = st.session_state['prediction_result']
+                result = pred['result']
+                
+                # Confidence indicator
+                st.markdown("#### 🎯 Độ Tin cậy")
+                render_confidence_indicator(result['confidence'])
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # KPI với confidence interval
+                st.markdown("#### 📊 Kết quả Dự đoán")
+                
+                k1, k2 = st.columns(2)
+                
+                with k1:
+                    st.metric(
+                        "⚡ Dự đoán chính",
+                        f"{result['total_kwh']:.0f} kWh",
+                        delta=f"±{(result['upper_bound']-result['total_kwh']):.0f} kWh"
+                    )
+                    st.caption(f"Khoảng: {result['lower_bound']:.0f} - {result['upper_bound']:.0f} kWh")
+                
+                with k2:
+                    st.metric(
+                        "💵 Chi phí dự kiến",
+                        f"{pred['total_cost']:,.0f} đ",
+                        delta=f"{pred['total_cost']/30:,.0f} đ/ngày"
+                    )
+                
+                # Methodology breakdown
+                st.markdown("#### 🔬 Phân tích Phương pháp")
+                
+                col_m1, col_m2 = st.columns(2)
+                
+                with col_m1:
+                    st.markdown("**⚖️ Trọng số Blend:**")
+                    pattern_weight = result['blend_weights']['pattern']
+                    device_weight = result['blend_weights']['device']
+                    
+                    fig_pie = go.Figure(data=[go.Pie(
+                        labels=['Pattern (Time)', 'Device (Estimate)'],
+                        values=[pattern_weight, device_weight],
+                        marker_colors=['#3b82f6', '#f59e0b'],
+                        hole=.4
+                    )])
+                    fig_pie.update_layout(
+                        height=250,
+                        showlegend=True,
+                        margin=dict(t=20, b=20, l=20, r=20)
+                    )
+                    st.plotly_chart(fig_pie, width='stretch')
+                
+                with col_m2:
+                    st.markdown("**📊 So sánh 2 Phương pháp:**")
+                    
+                    comparison_df = pd.DataFrame({
+                        'Phương pháp': ['Pattern (Time)', 'Device (Estimate)', 'Kết quả (Blend)'],
+                        'kWh': [
+                            result['baseline_kwh'],
+                            result['device_kwh'],
+                            result['total_kwh']
+                        ]
+                    })
+                    
+                    fig_bar = go.Figure(data=[
+                        go.Bar(
+                            x=comparison_df['Phương pháp'],
+                            y=comparison_df['kWh'],
+                            text=comparison_df['kWh'].apply(lambda x: f'{x:.0f}'),
+                            textposition='auto',
+                            marker_color=['#3b82f6', '#f59e0b', '#10b981']
+                        )
+                    ])
+                    fig_bar.update_layout(
+                        height=250,
+                        showlegend=False,
+                        yaxis_title='kWh/tháng',
+                        margin=dict(t=20, b=20, l=20, r=20)
+                    )
+                    st.plotly_chart(fig_bar, width='stretch')
+                
+                # Device breakdown
+                st.markdown("#### 🔌 Phân bố Thiết bị")
+                
+                device_kwh = result['adjustment_details']['device_kwh']
+                
+                if device_kwh:
+                    # Tạo dataframe
+                    device_df = pd.DataFrame([
+                        {
+                            'Thiết bị': name.replace('_', ' ').title(),
+                            'kWh': kwh,
+                            'Tỷ lệ': f"{(kwh/result['total_kwh']*100):.1f}%"
+                        }
+                        for name, kwh in sorted(device_kwh.items(), key=lambda x: x[1], reverse=True)
+                    ])
+                    
+                    fig_device = px.bar(
+                        device_df,
+                        x='Thiết bị',
+                        y='kWh',
+                        text='Tỷ lệ',
+                        color='kWh',
+                        color_continuous_scale='Blues'
+                    )
+                    fig_device.update_layout(
+                        height=300,
+                        showlegend=False,
+                        xaxis_title='',
+                        yaxis_title='kWh/tháng'
+                    )
+                    st.plotly_chart(fig_device, width='stretch')
+                
+                # Pattern theo giờ
+                st.markdown("#### 📈 Pattern Tiêu thụ trong Ngày")
+                
+                hourly_pattern = result['hourly_pattern']
+                
+                fig_pattern = go.Figure()
+                
+                fig_pattern.add_trace(go.Scatter(
+                    x=list(range(24)),
+                    y=hourly_pattern,
+                    mode='lines+markers',
+                    name='kWh/giờ',
+                    line=dict(color='#3b82f6', width=3),
+                    fill='tozeroy',
+                    fillcolor='rgba(59, 130, 246, 0.1)'
+                ))
+                
+                # Peak hours
+                peak_hours = result['peak_hours']
+                if peak_hours:
+                    fig_pattern.add_trace(go.Scatter(
+                        x=peak_hours,
+                        y=[hourly_pattern[h] for h in peak_hours],
+                        mode='markers',
+                        name='Cao điểm',
+                        marker=dict(color='red', size=12, symbol='star')
+                    ))
+                
+                fig_pattern.update_layout(
+                    height=350,
+                    xaxis_title="Giờ trong ngày",
+                    yaxis_title="kWh",
+                    hovermode='x unified'
+                )
+                
+                st.plotly_chart(fig_pattern, width='stretch')
+                
+                # Chi tiết EVN
+                with st.expander("💰 Chi tiết Bậc thang EVN"):
+                    for line in pred['cost_breakdown']:
+                        st.text(line)
+                
             else:
-                st.info("👈 Nhập thông tin và bấm Chạy Dự Báo.")
-
+                st.info("""
+                👈 **Hướng dẫn:**
+                
+                1. Nhập thông tin hộ gia đình
+                2. Nhập thiết bị điện
+                3. Bấm "Dự đoán Thông minh"
+                
+                💡 Hệ thống sẽ:
+                - Phân tích pattern thời gian (chính xác)
+                - Ước tính từ thiết bị (dựa EVN)
+                - Kết hợp thông minh với trọng số tự động
+                - Hiển thị độ tin cậy và khoảng dự đoán
+                """)
+    
+    # ==================== TAB 2: TIẾT KIỆM ====================
     with tab2:
-        st.dataframe(pd.DataFrame([["🥇", "User A", 950], ["🥈", "User B", 890], ["🥉", name, 850]], columns=["Rank", "User", "Score"]), use_container_width=True)
+        st.markdown("### 💡 Đề xuất Tiết kiệm")
+        
+        if 'prediction_result' not in st.session_state:
+            st.warning("⚠️ Vui lòng dự đoán trước!")
+        else:
+            pred = st.session_state['prediction_result']
+            result = pred['result']
+            user_params = pred['user_params']
+            
+            predictor = get_predictor()
+            recommendations = predictor.get_saving_recommendations(result, user_params)
+
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown("#### 📋 Danh sách Đề xuất")
+                for rec in recommendations:
+                    priority_colors = {
+                        'high': '🔴 CAO',
+                        'medium': '🟡 TRUNG BÌNH',
+                        'low': '🟢 THẤP'
+                    }
+                    
+                    with st.container(border=True):
+                        st.markdown(f"### {priority_colors.get(rec['priority'], '')} {rec['device']}")
+
+                        col_a, col_b = st.columns(2)
+                        with col_a:
+                            st.caption("**Hiện tại:**")
+                            st.write(rec['current'])
+                        with col_b:
+                            st.caption("**Tiết kiệm:**")
+                            st.write(rec['saving'])
+                        
+                        st.markdown("**🎯 Hành động:**")
+                        for action in rec['actions']:
+                            st.markdown(f"- {action}")
+            
+            with col2:
+                st.markdown("#### 💰 Tổng Tiết kiệm")
+                
+                total_kwh = result['total_kwh']
+                saving_kwh = total_kwh * 0.2  # Tiết kiệm 20% với đầy đủ biện pháp
+                saving_money = saving_kwh * 2500
+                
+                with st.container(border=True):
+                    st.metric(
+                        "Tiết kiệm/tháng",
+                        f"{saving_money:,.0f} đ",
+                        delta=f"-{saving_kwh:.0f} kWh"
+                    )
+                    
+                    st.metric(
+                        "Tiết kiệm/năm",
+                        f"{saving_money*12:,.0f} đ"
+                    )
+                    
+                    st.caption("*Nếu áp dụng đầy đủ*")
+                
+                # Chart
+                current = total_kwh
+                after = total_kwh - saving_kwh
+                
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    x=['Hiện tại', 'Sau tiết kiệm'],
+                    y=[current, after],
+                    text=[f'{current:.0f}', f'{after:.0f}'],
+                    textposition='auto',
+                    marker_color=['#ef4444', '#22c55e']
+                ))
+                fig.update_layout(
+                    height=300,
+                    showlegend=False,
+                    yaxis_title='kWh/tháng'
+                )
+                st.plotly_chart(fig, width='stretch')
+    
+    # ==================== TAB 3: LỊCH SỬ ====================
 
     with tab3:
         st.markdown("### 📜 Lịch sử Dự đoán")
@@ -230,69 +497,51 @@ def render_user_page(username, name):
         history = load_history(username)
         
         if history:
-            df_history = pd.DataFrame(history)
+            df = pd.DataFrame(history)
             
-            # Thống kê tổng quan
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Tổng lần dự đoán", len(history))
+                st.metric("Số lần", len(history))
             with col2:
-                avg_kwh = df_history['kwh'].mean()
-                st.metric("TB Tiêu thụ", f"{avg_kwh:.0f} kWh")
+                st.metric("TB kWh", f"{df['kwh'].mean():.0f}")
             with col3:
-                avg_cost = df_history['cost'].mean()
-                st.metric("TB Chi phí", f"{avg_cost:,.0f} đ")
+                st.metric("TB Chi phí", f"{df['cost'].mean():,.0f} đ")
             
-            # Bảng lịch sử
-            st.dataframe(
-                df_history,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "timestamp": "Thời gian",
-                    "inputs": "Thông tin",
-                    "kwh": st.column_config.NumberColumn("kWh/tháng", format="%.1f"),
-                    "cost": st.column_config.NumberColumn("Chi phí/tháng", format="%d đ")
-                }
-            )
+            st.dataframe(df, width='stretch', hide_index=True)
             
-            # Biểu đồ xu hướng
             if len(history) > 1:
-                st.markdown("#### 📈 Xu hướng Tiêu thụ")
-                fig_trend = go.Figure()
-                fig_trend.add_trace(go.Scatter(
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
                     x=list(range(1, len(history)+1)),
-                    y=df_history['kwh'],
-                    mode='lines+markers',
-                    name='kWh',
-                    line=dict(color='#3b82f6', width=2)
+                    y=df['kwh'],
+                    mode='lines+markers'
                 ))
-                fig_trend.update_layout(
-                    height=300,
-                    xaxis_title="Lần dự đoán",
-                    yaxis_title="kWh/tháng",
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)'
+                fig.update_layout(
+                    title="Xu hướng",
+                    xaxis_title="Lần",
+                    yaxis_title="kWh",
+                    height=300
                 )
-                st.plotly_chart(fig_trend, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
         else:
-            st.info("📭 Chưa có lịch sử dự đoán. Hãy thử dự đoán lần đầu!")
+            st.info("Chưa có lịch sử")
     
     # ==================== TAB 4: THỐNG KÊ ====================
     with tab4:
-        st.markdown("### 🏆 Thống kê & Xếp hạng")
+        st.markdown("### 📊 Thống kê")
         
         if 'prediction_result' in st.session_state:
-            result = st.session_state['prediction_result']
+            pred = st.session_state['prediction_result']
+            result = pred['result']
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("#### 🎯 Mức độ Tiết kiệm")
+                st.markdown("#### 🎯 Đánh giá")
                 
-                # Tính điểm tiết kiệm
-                score = 100
                 kwh = result['total_kwh']
+                confidence = result['confidence']
+
                 
                 if kwh > 400:
                     score = 40
@@ -306,25 +555,27 @@ def render_user_page(username, name):
                 else:
                     score = 95
                     rank = "🏆 Xuất sắc"
+                # Điều chỉnh score theo confidence
+                adjusted_score = score * confidence
                 
-                # Progress bar
-                st.progress(score / 100)
+                st.progress(adjusted_score / 100)
                 st.markdown(f"### {rank}")
-                st.caption(f"Điểm: {score}/100")
+                st.caption(f"Điểm: {adjusted_score:.0f}/100")
+                st.caption(f"(Có tính độ tin cậy: {confidence*100:.0f}%)")
             
             with col2:
-                st.markdown("#### 🌍 So với Trung bình")
+                st.markdown("#### 🌍 So sánh")
                 
-                avg_household = 250
-                diff = kwh - avg_household
-                diff_percent = (diff / avg_household) * 100
+                avg = 250
+                diff = kwh - avg
+                diff_pct = (diff / avg) * 100
                 
                 if diff > 0:
-                    st.error(f"Cao hơn {diff_percent:.0f}% 📈")
+                    st.error(f"Cao hơn {diff_pct:.0f}% 📈")
                 else:
-                    st.success(f"Thấp hơn {abs(diff_percent):.0f}% 📉")
+                    st.success(f"Thấp hơn {abs(diff_pct):.0f}% 📉")
                 
-                st.metric("Hộ TB", f"{avg_household} kWh")
+                st.metric("Hộ TB", f"{avg} kWh")
                 st.metric("Bạn", f"{kwh:.0f} kWh")
         else:
             st.info("Thực hiện dự đoán để xem thống kê!")

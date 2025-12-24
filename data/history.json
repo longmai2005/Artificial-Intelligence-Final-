@@ -29,6 +29,78 @@
             "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - 60m\u00b2",
             "kwh": 626.4,
             "cost": 1691586
+        },
+        {
+            "timestamp": "2025-12-12 10:06:30",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 858.9,
+            "cost": 2424193
+        },
+        {
+            "timestamp": "2025-12-12 10:45:40",
+            "inputs": "D\u1ef1 \u0111o\u00e1n 30 ng\u00e0y",
+            "kwh": 150.72,
+            "cost": 293500
+        },
+        {
+            "timestamp": "2025-12-12 11:06:25",
+            "inputs": "D\u1ef1 \u0111o\u00e1n 7 ng\u00e0y",
+            "kwh": 35.17,
+            "cost": 63511
+        },
+        {
+            "timestamp": "2025-12-12 11:19:45",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 658.42,
+            "cost": 1792480
+        },
+        {
+            "timestamp": "2025-12-12 11:21:05",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 577.42,
+            "cost": 1537249
+        },
+        {
+            "timestamp": "2025-12-12 11:22:44",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 2 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 629.39,
+            "cost": 1701018
+        },
+        {
+            "timestamp": "2025-12-12 11:26:14",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 577.42,
+            "cost": 1537249
+        },
+        {
+            "timestamp": "2025-12-12 11:30:26",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 519.1,
+            "cost": 1353483
+        },
+        {
+            "timestamp": "2025-12-12 12:24:47",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 578.97,
+            "cost": 1542139
+        },
+        {
+            "timestamp": "2025-12-12 12:37:30",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 578.03,
+            "cost": 1539161
+        },
+        {
+            "timestamp": "2025-12-24 18:06:29",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 577.49,
+            "cost": 1537482
+        },
+        {
+            "timestamp": "2025-12-24 19:42:22",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 576.11,
+            "cost": 1533133
         }
     ],
     "khtran": [

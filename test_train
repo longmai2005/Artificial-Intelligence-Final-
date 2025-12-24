@@ -1,0 +1,18 @@
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore')
+
+# 1) Kiểm tra khoảng thời gian mẫu
+df = pd.read_csv('data/cleaned_dataset.csv', parse_dates=['Datetime'], index_col='Datetime')
+diff = df.index.to_series().diff().median()
+print("Median sampling interval:", diff)
+
+# 2) Thống kê target raw
+print(df['Global_active_power'].describe())
+
+# 3) Kiểm tra cột energy_per_day_kwh
+print(df['energy_per_day_kwh'].head())
+print(df['energy_per_day_kwh'].describe())
