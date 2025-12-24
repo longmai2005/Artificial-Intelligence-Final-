@@ -490,6 +490,7 @@ def render_user_page(username, name):
                 st.plotly_chart(fig, width='stretch')
     
     # ==================== TAB 3: LỊCH SỬ ====================
+
     with tab3:
         st.markdown("### 📜 Lịch sử Dự đoán")
         
