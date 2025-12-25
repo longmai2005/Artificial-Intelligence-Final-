@@ -43,11 +43,25 @@ def save_user(username, password, name, email=""):
         json.dump(users, f)
     return True
 
+# src/backend/auth.py
+
 def authenticate(username, password):
     users = load_users()
-    if username in users and users[username]["password"] == password:
-        return users[username]
-    return None
+    # Kiểm tra tài khoản tồn tại hay không
+    if username not in users:
+        return "NOT_FOUND" # Trả về chuỗi để app.py nhận diện
+    
+    # Kiểm tra mật khẩu
+    if users[username]["password"] != password:
+        return "WRONG_PASS" # Trả về chuỗi để app.py nhận diện
+    
+    # Nếu đúng, cập nhật thời gian đăng nhập (Fix lỗi Status Offline ở câu hỏi trước)
+    from datetime import datetime
+    users[username]["last_login"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(USER_DB_PATH, "w") as f:
+        json.dump(users, f, indent=4)
+        
+    return users[username] # Trả về dict dữ liệu user
 
 def check_user_exists(username, email):
     users = load_users()

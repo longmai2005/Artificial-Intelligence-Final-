@@ -1,8 +1,11 @@
 # Bỏ qua file dữ liệu nặng (người khác sẽ tự tải về sau)
 data/*.txt
-data/*.csv
+*.csv
 data/*.zip
-
+checkpoints/best_model_random_forest.pkl
+checkpoints/best_model_lightgbm.pkl
+cleaned_dataset.csv
+checkpoints/*.pkl
 # Giữ lại file .gitkeep nếu thư mục data trống (để giữ cấu trúc thư mục)
 !data/.gitkeep
 

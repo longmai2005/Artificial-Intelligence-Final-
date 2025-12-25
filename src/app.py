@@ -50,7 +50,7 @@ def render_homepage():
     with c1:
         st.markdown('<div style="font-size:1.8rem; font-weight:800; background:linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">⚡ Smart Energy</div>', unsafe_allow_html=True)
     with c2:
-        if st.button("Đăng Nhập / Đăng Ký", type="primary", use_container_width=True):
+        if st.button("Đăng Nhập / Đăng Ký", type="primary", width='stretch'):
             nav_to_login()
 
     # Hero Section
@@ -66,7 +66,7 @@ def render_homepage():
     # CTA Button
     _, c_cta, _ = st.columns([1, 1, 1])
     with c_cta:
-        if st.button("🚀 Bắt đầu ngay bây giờ", use_container_width=True):
+        if st.button("🚀 Bắt đầu ngay bây giờ", width='stretch'):
             nav_to_login()
 
     # Features Section
@@ -128,16 +128,26 @@ def login_page():
             # === MODE 1: ĐĂNG NHẬP ===
             if st.session_state['auth_mode'] == 'login':
                 st.markdown("<h3 style='text-align:center'>Đăng Nhập</h3>", unsafe_allow_html=True)
+                
+                # Khởi tạo biến lưu lỗi trong session nếu chưa có
+                if 'login_error' not in st.session_state: 
+                    st.session_state['login_error'] = None
+
                 with st.form("login_form"):
                     u = st.text_input("Tài khoản", placeholder="Username")
                     p = st.text_input("Mật khẩu", type="password", placeholder="••••••")
                     
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.form_submit_button("🚀 Đăng nhập"):
+                    submit = st.form_submit_button("🚀 Đăng nhập")
+                    
+                    if submit:
                         res = authenticate(u, p)
-                        if res == "NOT_FOUND": st.error("❌ Tài khoản không tồn tại!")
-                        elif res == "WRONG_PASS": st.error("❌ Sai mật khẩu.")
+                        if res == "NOT_FOUND": 
+                            st.session_state['login_error'] = "❌ Tài khoản không tồn tại!"
+                        elif res == "WRONG_PASS": 
+                            st.session_state['login_error'] = "❌ Sai mật khẩu."
                         elif res:
+                            # Nếu đăng nhập đúng, xóa lỗi và thực hiện đăng nhập
+                            st.session_state['login_error'] = None 
                             st.session_state['logged_in'] = True
                             st.session_state['user_role'] = res['role']
                             st.session_state['username'] = u
@@ -145,6 +155,14 @@ def login_page():
                             st.toast("Đăng nhập thành công!", icon="🟢")
                             time.sleep(0.5)
                             st.rerun()
+                        else:
+                            # Trường hợp mặc định nếu authenticate trả về None chung chung
+                            st.session_state['login_error'] = "❌ Lỗi hệ thống, vui lòng thử lại."
+
+                # HIỂN THỊ LỖI Ở ĐÂY (Bên ngoài form để không bị mất khi rerun)
+                if st.session_state['login_error']:
+                    st.error(st.session_state['login_error'])
+                
                 
                 # Các nút chuyển hướng
                 st.markdown("---")
