@@ -45,9 +45,13 @@ def save_user(username, password, name, email=""):
 
 def authenticate(username, password):
     users = load_users()
-    if username in users and users[username]["password"] == password:
-        return users[username]
-    return None
+    if username not in users:
+        return "NOT_FOUND"  # Trả về chuỗi để app.py nhận diện lỗi
+    
+    if users[username]["password"] != password:
+        return "WRONG_PASS" # Trả về chuỗi để app.py nhận diện lỗi
+        
+    return users[username]  # Trả về dict thông tin nếu đúng hoàn toàn
 
 def check_user_exists(username, email):
     users = load_users()
