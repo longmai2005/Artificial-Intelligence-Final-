@@ -275,8 +275,9 @@ def render_user_page(username, name):
                 
                 with col_m1:
                     st.markdown("**⚖️ Trọng số Blend:**")
-                    pattern_weight = result['blend_weights']['pattern']
-                    device_weight = result['blend_weights']['device']
+                    weights = result.get('blend_weights', {'pattern': 0.5, 'device': 0.5})
+                    pattern_weight = weights['pattern']
+                    device_weight = weights['device']
                     
                     fig_pie = go.Figure(data=[go.Pie(
                         labels=['Pattern (Time)', 'Device (Estimate)'],
