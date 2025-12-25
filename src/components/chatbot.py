@@ -108,7 +108,7 @@ def render_floating_chatbot():
     # --- LOGIC CHATBOT ---
     
     # Nút Popover với icon chat
-    with st.popover("💬", use_container_width=False):
+    with st.popover("💬", width='content'):
         
         # Header xanh đẹp
         st.markdown("""

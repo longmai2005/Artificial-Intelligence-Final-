@@ -176,7 +176,7 @@ def render_user_page(username, name):
             predict_btn = st.button(
                 "🚀 Dự đoán Thông minh",
                 type="primary",
-                use_container_width=True
+                width='stretch'
             )
         
         with col_result:

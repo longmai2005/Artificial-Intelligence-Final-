@@ -69,7 +69,7 @@ def render_admin_page():
     with c_head:
         st.markdown("## 🛡️ Quản Trị Hệ Thống")
     with c_ref:
-        if st.button("🔄 Làm mới", use_container_width=True):
+        if st.button("🔄 Làm mới", width='stretch'):
             st.rerun()
 
     # Load dữ liệu
@@ -97,15 +97,15 @@ def render_admin_page():
                 visits = np.random.randint(50, 200, 7)
                 fig = go.Figure(go.Scatter(x=dates, y=visits, fill='tozeroy', line=dict(color='#8b5cf6')))
                 fig.update_layout(height=300, margin=dict(l=20,r=20,t=20,b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
         
         with c_right:
             with st.container(border=True):
                 st.markdown("##### 🍰 Thiết bị")
                 fig_pie = px.pie(values=[40, 20, 20, 20], names=['Máy lạnh', 'Tủ lạnh', 'Đèn', 'Khác'],
-                               color_discrete_sequence=['#3b82f6', '#06b6d4', '#8b5cf6', '#64748b'])
+                            color_discrete_sequence=['#3b82f6', '#06b6d4', '#8b5cf6', '#64748b'])
                 fig_pie.update_layout(height=300, margin=dict(l=10,r=10,t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.2))
-                st.plotly_chart(fig_pie, use_container_width=True)
+                st.plotly_chart(fig_pie, width='stretch')
 
     # --- TAB 2: USER MANAGEMENT ---
     with tabs[1]:
@@ -113,7 +113,7 @@ def render_admin_page():
             # Bảng danh sách user
             st.dataframe(
                 pd.DataFrame(table_data), 
-                use_container_width=True, 
+                width='stretch', 
                 hide_index=True,
                 column_config={
                     "Trạng thái": st.column_config.TextColumn("Status", width="small"),
@@ -128,7 +128,7 @@ def render_admin_page():
                 # Lọc bỏ admin ra khỏi danh sách xóa
                 u_del = st.selectbox("Chọn user:", [u for u in users if u != 'admin'], label_visibility="collapsed")
             with c_btn:
-                if st.button("Xóa User", type="primary", use_container_width=True):
+                if st.button("Xóa User", type="primary", width='stretch'):
                     if u_del:
                         ok, msg = delete_user(u_del)
                         if ok:
@@ -159,7 +159,7 @@ def render_admin_page():
             except: continue
                 
         if log_data:
-            st.dataframe(pd.DataFrame(log_data), use_container_width=True, hide_index=True, column_config={
+            st.dataframe(pd.DataFrame(log_data), width='stretch', hide_index=True, column_config={
                 "Cấp độ": st.column_config.TextColumn("Loại", width="small"),
                 "Nội dung": st.column_config.TextColumn("Chi tiết hành động", width="large"),
             })

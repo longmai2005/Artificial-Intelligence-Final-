@@ -50,7 +50,7 @@ def render_homepage():
     with c1:
         st.markdown('<div style="font-size:1.8rem; font-weight:800; background:linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">⚡ Smart Energy</div>', unsafe_allow_html=True)
     with c2:
-        if st.button("Đăng Nhập / Đăng Ký", type="primary", use_container_width=True):
+        if st.button("Đăng Nhập / Đăng Ký", type="primary", width='stretch'):
             nav_to_login()
 
     # Hero Section
@@ -66,7 +66,7 @@ def render_homepage():
     # CTA Button
     _, c_cta, _ = st.columns([1, 1, 1])
     with c_cta:
-        if st.button("🚀 Bắt đầu ngay bây giờ", use_container_width=True):
+        if st.button("🚀 Bắt đầu ngay bây giờ", width='stretch'):
             nav_to_login()
 
     # Features Section
@@ -157,7 +157,7 @@ def login_page():
                             st.rerun()
                         else:
                             # Trường hợp mặc định nếu authenticate trả về None chung chung
-                            st.session_state['login_error'] = "❌ Thông tin đăng nhập không chính xác."
+                            st.session_state['login_error'] = "❌ Lỗi hệ thống, vui lòng thử lại."
 
                 # HIỂN THỊ LỖI Ở ĐÂY (Bên ngoài form để không bị mất khi rerun)
                 if st.session_state['login_error']:

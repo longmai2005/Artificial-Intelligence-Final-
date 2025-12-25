@@ -16,18 +16,18 @@ def render_ai_report(total_kwh, breakdown, user_inputs):
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
-        if st.button("✨ Tạo Báo cáo Chi tiết từ AI", type="primary", use_container_width=True):
+        if st.button("✨ Tạo Báo cáo Chi tiết từ AI", type="primary", width='stretch'):
             with st.spinner("🤖 AI Expert đang phân tích sâu..."):
                 # Gọi Gemini AI
                 analysis = analyze_with_gemini(total_kwh, breakdown, user_inputs)
                 st.session_state['ai_analysis'] = analysis
     
     with col2:
-        if st.button("📥 Xuất PDF", use_container_width=True):
+        if st.button("📥 Xuất PDF", width='stretch'):
             st.info("Tính năng đang phát triển!")
     
     with col3:
-        if st.button("📧 Gửi Email", use_container_width=True):
+        if st.button("📧 Gửi Email", width='stretch'):
             st.info("Tính năng đang phát triển!")
     
     st.markdown("---")

@@ -37,4 +37,4 @@ def render_dashboard(current_data, current_time):
         df_pie = {"Device": ["Bếp", "Giặt là", "Điều hòa/Nóng lạnh"], "Value": [sub1, sub2, sub3]}
         fig = px.pie(df_pie, values='Value', names='Device', title="Phân bổ thiết bị chính")
         fig.update_layout(height=300, margin=dict(t=30, b=10, l=10, r=10))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
