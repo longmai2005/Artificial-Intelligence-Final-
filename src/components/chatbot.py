@@ -6,8 +6,7 @@ def render_floating_chatbot():
     """
     Hiển thị Chatbot bong bóng (Floating Bubble) chuẩn UI.
     """
-    
-    # --- CSS QUAN TRỌNG ĐỂ FIX LỖI THANH NGANG ---
+
     st.markdown("""
     <style>
         /* 1. Container bao ngoài nút Popover */

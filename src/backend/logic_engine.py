@@ -36,15 +36,11 @@ def calculate_evn_bill(kwh):
         
     return int(total_bill), breakdown
 
-# Giữ lại các hàm cũ nếu cần, hoặc cập nhật hàm logic cũ để dùng cái mới này
 def calculate_cost(power_kw, hour):
-    # Hàm cũ dùng cho realtime dashboard (giữ nguyên để không lỗi code cũ)
     return power_kw * 2500 
 
 def generate_insights(current_hour, power, sub_meters):
-    # (Giữ nguyên code cũ của hàm này...)
     insights = []
-    # ... code logic cũ ...
     if not insights:
         insights.append({"type": "success", "msg": "Hệ thống hoạt động tối ưu.", "action": "Duy trì thói quen tốt!"})
     return insights

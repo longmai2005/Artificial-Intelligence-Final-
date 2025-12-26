@@ -103,7 +103,7 @@ class EnergyPredictor:
         """
         house_factor = self.HOUSEHOLD_FACTORS['house_type'].get(user_params.get('house_type', 'Nhà phố'), 1.0)
         
-        # 1. Tính toán Factor (Giữ nguyên logic cũ của bạn)
+        # 1. Tính toán Factor 
         num_people = user_params.get('num_people', 3)
         people_factor = 1.0 + ((num_people - self.HOUSEHOLD_FACTORS['people_base']) * self.HOUSEHOLD_FACTORS['people_increment'])
         
@@ -246,7 +246,7 @@ class EnergyPredictor:
         except Exception as e:
             print(f"⚠️ Lỗi trích xuất pattern: {e}")
             
-        # Fallback: Trả về mức tiêu thụ mặc định (không dùng hàm ngẫu nhiên hay exp)
+        # Fallback: Trả về mức tiêu thụ mặc định
         return [0.5, 0.4, 0.3, 0.3, 0.4, 0.6, 1.2, 1.5, 1.0, 0.8, 0.7, 0.7, 
                 0.8, 0.9, 0.8, 0.9, 1.1, 1.8, 2.2, 2.1, 1.5, 1.0, 0.7, 0.6]
     
