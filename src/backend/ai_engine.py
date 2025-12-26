@@ -2,7 +2,7 @@ import google.generativeai as genai
 import streamlit as st
 
 # Key của bạn (Giữ nguyên)
-GOOGLE_API_KEY = "AIzaSyA9KbCCUBWqMbTnA2V0kLuvTyaHLHZA3YY" 
+GOOGLE_API_KEY = "AIzaSyC76ju3zuqcC6URds3LXuhPQrhGWVBUaow" 
 
 def ask_gemini(question):
     """
@@ -22,7 +22,7 @@ def ask_gemini(question):
         Tập trung vào giải pháp tiết kiệm điện.
         """
         
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         full_prompt = f"{system_instruction}\n\nUser: {question}"
         response = model.generate_content(full_prompt)
         
