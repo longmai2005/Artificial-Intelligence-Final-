@@ -1,14 +1,14 @@
 import google.generativeai as genai
 import streamlit as st
+from dotenv import load_dotenv
+import os
 
-# Key của bạn (Giữ nguyên)
-GOOGLE_API_KEY = "AIzaSyC76ju3zuqcC6URds3LXuhPQrhGWVBUaow" 
-
+load_dotenv() # Tải các biến từ file .env vào hệ thống
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 def ask_gemini(question):
     """
     Gửi câu hỏi lên Google Gemini và nhận câu trả lời
     """
-    # CHỈ KIỂM TRA NẾU KEY BỊ RỖNG
     if not GOOGLE_API_KEY:
         return "⚠️ Hệ thống chưa có API Key. Vui lòng kiểm tra file `src/backend/ai_engine.py`."
 

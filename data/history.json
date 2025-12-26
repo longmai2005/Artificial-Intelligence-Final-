@@ -225,6 +225,24 @@
             "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
             "kwh": 129.19,
             "cost": 246846
+        },
+        {
+            "timestamp": "2025-12-26 14:12:01",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 129.19,
+            "cost": 246846
+        },
+        {
+            "timestamp": "2025-12-26 14:12:58",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 129.19,
+            "cost": 246846
+        },
+        {
+            "timestamp": "2025-12-26 14:13:45",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 129.19,
+            "cost": 246846
         }
     ]
 }

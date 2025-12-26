@@ -279,74 +279,7 @@ def render_user_page(username, name):
                         delta=f"{pred['total_cost']/30:,.0f} đ/ngày"
                     )
                 
-                # Methodology breakdown
-                st.markdown("#### 🔬 Phân tích Phương pháp")
-                
-                col_m1, col_m2 = st.columns(2)
-                
-                with col_m1:
-                    st.markdown("**⚖️ Trọng số Blend:**")
-                    weights = result.get('blend_weights', {'pattern': 0.5, 'device': 0.5})
-                    pattern_weight = weights['pattern']
-                    device_weight = weights['device']
-                    
-                    fig_pie = go.Figure(data=[go.Pie(
-                        labels=['Pattern (Time)', 'Device (Estimate)'],
-                        values=[pattern_weight, device_weight],
-                        marker_colors=['#3b82f6', '#f59e0b'],
-                        hole=.4
-                    )])
-                    fig_pie.update_layout(
-                        height=250,
-                        showlegend=True,
-                        margin=dict(t=20, b=20, l=20, r=20)
-                    )
-                    st.plotly_chart(fig_pie, width='stretch')
-                
-                with col_m2:
-                    st.markdown("**📊 So sánh 2 Phương pháp:**")
-                    weights = result.get('blend_weights', {'pattern': 0.5, 'device': 0.5})
-                    raw_blend = (result['baseline_kwh'] * weights['pattern']) + (result['device_kwh'] * weights['device'])
-                    
-                    comparison_df = pd.DataFrame({
-                        'Giai đoạn': ['1. Pattern', '2. Thiết bị', '3. Blend thô', '4. Kết quả (Final)'],
-                        'kWh': [
-                            result['baseline_kwh'],
-                            result['device_kwh'],
-                            raw_blend,
-                            result['total_kwh']
-                        ],
-                        'Màu': ['#3b82f6', '#f59e0b', '#94a3b8', '#10b981']
-                    })
-                    
-                    fig_bar = go.Figure(data=[
-                        go.Bar(
-                            x=comparison_df['Giai đoạn'],
-                            y=comparison_df['kWh'],
-                            text=comparison_df['kWh'].apply(lambda x: f'{x:.0f}'),
-                            textposition='auto',
-                            marker_color=comparison_df['Màu']
-                        )
-                    ])
-                    fig_bar.update_layout(
-                        height=250,
-                        showlegend=False,
-                        yaxis_title='kWh/tháng',
-                        margin=dict(t=20, b=20, l=20, r=20),
-                        paper_bgcolor='rgba(17, 25, 40, 1)', 
-                        plot_bgcolor='rgba(17, 25, 40, 1)',  
-                        font=dict(color='white'),
-                        xaxis=dict(
-                            showgrid=False,                  # Tắt lưới dọc
-                            color='white'                    # Màu trục X
-                        ),
-                        yaxis=dict(
-                            gridcolor='rgba(255, 255, 255, 0.1)', # Màu lưới ngang mờ
-                            color='white'                         # Màu trục Y
-                        )
-                    )
-                    st.plotly_chart(fig_bar, width='stretch')
-                
+                # Methodology breakdown                
                 # Device breakdown
                 st.markdown("#### 🔌 Phân bố Thiết bị")
                 
