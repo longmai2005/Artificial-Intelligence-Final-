@@ -183,17 +183,19 @@ class EnergyPredictor:
         device_monthly = adjustment['total_device_kwh']
         
         # --- BƯỚC 3: BLEND (Trộn AI và Heuristic) ---
-        # Tính độ lệch giữa AI và Khai báo người dùng
         ratio = device_monthly / baseline_monthly if baseline_monthly > 0 else 1.0
-        # Trọng số linh hoạt: Càng gần 1.0 thì càng tin Pattern (AI), càng lệch xa càng tin Device
         diff = abs(1.0 - ratio)
         
-        # pattern_weight sẽ chạy từ 0.3 đến 0.8 tùy vào độ khớp dữ liệu
         pattern_weight = max(0.3, min(0.8, 1.0 - diff)) 
         device_weight = 1.0 - pattern_weight
-        # Kết quả dự báo thô
-        raw_predicted_kwh = (baseline_monthly * pattern_weight) + (device_monthly * device_weight)
-        # Áp dụng Calibration 0.9 (Hệ số thực tế hóa)
+
+        # Lấy hệ số loại nhà từ adjustment
+        house_type_factor = adjustment['overall_factor'] 
+
+        # Kết quả dự báo thô: Phải nhân với hệ số loại nhà (Biệt thự sẽ tăng, Chung cư sẽ giảm)
+        raw_predicted_kwh = ((baseline_monthly * pattern_weight) + (device_monthly * device_weight)) * house_type_factor
+        
+        # Áp dụng Calibration 0.9
         predicted_kwh = raw_predicted_kwh * 0.9
         
         # --- BƯỚC 4: KẾT QUẢ ---
@@ -205,7 +207,8 @@ class EnergyPredictor:
         
         confidence = adjustment['confidence']
         margin = predicted_kwh * (1 - confidence) * 0.5
-        
+        print(f"DEBUG: House Factor used: {house_type_factor}")
+
         return {
             'total_kwh': predicted_kwh,
             'lower_bound': predicted_kwh - margin,
@@ -223,7 +226,7 @@ class EnergyPredictor:
             },
             'peak_hours': [i for i, h in enumerate(self._extract_hourly_pattern(history_df)) if h > 1.2]
         }
-
+        
     def _extract_hourly_pattern(self, history_df):
         """Trích xuất pattern tiêu thụ thực tế từ dữ liệu lịch sử"""
         try:
