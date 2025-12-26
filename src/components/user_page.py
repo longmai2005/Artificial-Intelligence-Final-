@@ -17,11 +17,11 @@ from src.backend.predictor import EnergyPredictor
 from src.backend.data_loader import load_dataset
 from src.utils.style import render_hero_section
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def get_predictor():
     return EnergyPredictor()
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_historical_data():
     """Load dữ liệu lịch sử - lấy sample lớn hơn để có pattern tốt"""
     return load_dataset(nrows=200000)  # 200k điểm ≈ 138 ngày
@@ -31,28 +31,39 @@ def render_confidence_indicator(confidence):
     """Hiển thị độ tin cậy bằng color-coded badge"""
     
     if confidence >= 0.7:
-        color = "🟢"
+        color_icon = "🟢"
         text = "CAO"
-        style = "success"
+        bg_color = "#d4edda"
+        border_color = "#c3e6cb"
+        text_color = "#155724"
     elif confidence >= 0.5:
-        color = "🟡"
+        color_icon = "🟡"
         text = "TRUNG BÌNH"
-        style = "warning"
+        bg_color = "#fff3cd"
+        border_color = "#ffeeba"
+        text_color = "#856404"
     else:
-        color = "🔴"
+        color_icon = "🔴"
         text = "THẤP"
-        style = "error"
+        bg_color = "#f8d7da"
+        border_color = "#f5c6cb"
+        text_color = "#721c24"
     
     st.markdown(f"""
     <div style="
-        background: {'#d4edda' if style=='success' else '#fff3cd' if style=='warning' else '#f8d7da'};
-        border: 1px solid {'#c3e6cb' if style=='success' else '#ffeeba' if style=='warning' else '#f5c6cb'};
-        padding: 10px;
-        border-radius: 5px;
+        background-color: {bg_color};
+        border: 1px solid {border_color};
+        padding: 15px;
+        border-radius: 10px;
         text-align: center;
+        margin-bottom: 20px;
     ">
-        <strong>{color} Độ tin cậy: {text}</strong><br>
-        <span style="font-size: 24px; font-weight: bold;">{confidence*100:.0f}%</span>
+        <strong style="color: {text_color}; font-size: 16px;">
+            {color_icon} Độ tin cậy: {text}
+        </strong><br>
+        <span style="font-size: 32px; font-weight: 800; color: {text_color};">
+            {confidence*100:.0f}%
+        </span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -268,73 +279,21 @@ def render_user_page(username, name):
                         delta=f"{pred['total_cost']/30:,.0f} đ/ngày"
                     )
                 
-                # Methodology breakdown
-                st.markdown("#### 🔬 Phân tích Phương pháp")
-                
-                col_m1, col_m2 = st.columns(2)
-                
-                with col_m1:
-                    st.markdown("**⚖️ Trọng số Blend:**")
-                    weights = result.get('blend_weights', {'pattern': 0.5, 'device': 0.5})
-                    pattern_weight = weights['pattern']
-                    device_weight = weights['device']
-                    
-                    fig_pie = go.Figure(data=[go.Pie(
-                        labels=['Pattern (Time)', 'Device (Estimate)'],
-                        values=[pattern_weight, device_weight],
-                        marker_colors=['#3b82f6', '#f59e0b'],
-                        hole=.4
-                    )])
-                    fig_pie.update_layout(
-                        height=250,
-                        showlegend=True,
-                        margin=dict(t=20, b=20, l=20, r=20)
-                    )
-                    st.plotly_chart(fig_pie, width='stretch')
-                
-                with col_m2:
-                    st.markdown("**📊 So sánh 2 Phương pháp:**")
-                    
-                    comparison_df = pd.DataFrame({
-                        'Phương pháp': ['Pattern (Time)', 'Device (Estimate)', 'Kết quả (Blend)'],
-                        'kWh': [
-                            result['baseline_kwh'],
-                            result['device_kwh'],
-                            result['total_kwh']
-                        ]
-                    })
-                    
-                    fig_bar = go.Figure(data=[
-                        go.Bar(
-                            x=comparison_df['Phương pháp'],
-                            y=comparison_df['kWh'],
-                            text=comparison_df['kWh'].apply(lambda x: f'{x:.0f}'),
-                            textposition='auto',
-                            marker_color=['#3b82f6', '#f59e0b', '#10b981']
-                        )
-                    ])
-                    fig_bar.update_layout(
-                        height=250,
-                        showlegend=False,
-                        yaxis_title='kWh/tháng',
-                        margin=dict(t=20, b=20, l=20, r=20)
-                    )
-                    st.plotly_chart(fig_bar, width='stretch')
-                
+                # Methodology breakdown                
                 # Device breakdown
                 st.markdown("#### 🔌 Phân bố Thiết bị")
                 
-                device_kwh = result['adjustment_details']['device_kwh']
+                device_kwh_dict = result['adjustment_details']['device_kwh']
                 
-                if device_kwh:
+                if device_kwh_dict:
                     # Tạo dataframe
                     device_df = pd.DataFrame([
                         {
-                            'Thiết bị': name.replace('_', ' ').title(),
+                            'Thiết bị': name, 
                             'kWh': kwh,
                             'Tỷ lệ': f"{(kwh/result['total_kwh']*100):.1f}%"
                         }
-                        for name, kwh in sorted(device_kwh.items(), key=lambda x: x[1], reverse=True)
+                        for name, kwh in sorted(device_kwh_dict.items(), key=lambda x: x[1], reverse=True)
                     ])
                     
                     fig_device = px.bar(
@@ -343,13 +302,14 @@ def render_user_page(username, name):
                         y='kWh',
                         text='Tỷ lệ',
                         color='kWh',
-                        color_continuous_scale='Blues'
+                        color_continuous_scale='Viridis' 
                     )
                     fig_device.update_layout(
-                        height=300,
+                        height=350,
                         showlegend=False,
                         xaxis_title='',
-                        yaxis_title='kWh/tháng'
+                        yaxis_title='kWh/tháng',
+                        margin=dict(t=20, b=20, l=20, r=20)
                     )
                     st.plotly_chart(fig_device, width='stretch')
                 
@@ -357,7 +317,7 @@ def render_user_page(username, name):
                 st.markdown("#### 📈 Pattern Tiêu thụ trong Ngày")
                 
                 hourly_pattern = result['hourly_pattern']
-                
+                peak_hours = result['peak_hours']
                 fig_pattern = go.Figure()
                 
                 fig_pattern.add_trace(go.Scatter(
@@ -367,25 +327,33 @@ def render_user_page(username, name):
                     name='kWh/giờ',
                     line=dict(color='#3b82f6', width=3),
                     fill='tozeroy',
-                    fillcolor='rgba(59, 130, 246, 0.1)'
+                    fillcolor='rgba(59, 130, 246, 0.1)',
+                    hovertemplate='Giờ: %{x}h<br>Tiêu thụ: %{y:.2f} kWh<extra></extra>'
                 ))
-                
-                # Peak hours
-                peak_hours = result['peak_hours']
                 if peak_hours:
                     fig_pattern.add_trace(go.Scatter(
                         x=peak_hours,
                         y=[hourly_pattern[h] for h in peak_hours],
                         mode='markers',
-                        name='Cao điểm',
-                        marker=dict(color='red', size=12, symbol='star')
+                        name='Giờ cao điểm',
+                        marker=dict(color='#ef4444', size=12, symbol='star'),
+                        hovertemplate='<b>CA ĐIỂM</b><br>Giờ: %{x}h<extra></extra>'
                     ))
                 
                 fig_pattern.update_layout(
                     height=350,
-                    xaxis_title="Giờ trong ngày",
-                    yaxis_title="kWh",
-                    hovermode='x unified'
+                    xaxis=dict(
+                        title="Giờ trong ngày",
+                        tickmode='linear',
+                        tick0=0,
+                        dtick=2,
+                        range=[0, 23]
+                    ),
+                    yaxis=dict(title="Mức tiêu thụ (kWh)", gridcolor='rgba(255,255,255,0.1)'),
+                    margin=dict(t=20, b=20, l=20, r=20),
+                    hovermode='x unified',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)'
                 )
                 
                 st.plotly_chart(fig_pattern, width='stretch')

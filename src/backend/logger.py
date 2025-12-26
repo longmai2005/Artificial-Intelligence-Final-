@@ -35,7 +35,6 @@ def get_recent_logs(limit=20):
     try:
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             lines = f.readlines()
-        # Lấy limit dòng cuối cùng và đảo ngược (Mới nhất lên đầu) để admin dễ xem
         return lines[-limit:][::-1]
     except Exception:
         return ["❌ Lỗi đọc file log."]

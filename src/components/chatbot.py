@@ -1,18 +1,12 @@
 import streamlit as st
 import time
-
-# Import hàm AI (Nếu chưa có thì dùng giả lập)
-try:
-    from src.backend.ai_engine import ask_gemini
-except ImportError:
-    def ask_gemini(p): return "Chế độ Demo: " + p
+from src.backend.ai_engine import ask_gemini
 
 def render_floating_chatbot():
     """
     Hiển thị Chatbot bong bóng (Floating Bubble) chuẩn UI.
     """
-    
-    # --- CSS QUAN TRỌNG ĐỂ FIX LỖI THANH NGANG ---
+
     st.markdown("""
     <style>
         /* 1. Container bao ngoài nút Popover */
@@ -22,7 +16,6 @@ def render_floating_chatbot():
             right: 30px !important;
             z-index: 99999 !important;
             
-            /* DÒNG NÀY SỬA LỖI THANH NGANG: */
             width: auto !important;
             height: auto !important;
             min-width: 0 !important;
@@ -108,58 +101,65 @@ def render_floating_chatbot():
     # --- LOGIC CHATBOT ---
     
     # Nút Popover với icon chat
-    with st.popover("💬", width='content'):
-        
-        # Header xanh đẹp
+    with st.popover("💬"):
         st.markdown("""
-            <div style="background: linear-gradient(90deg, #3b82f6, #06b6d4); padding: 15px; text-align: center;">
-                <h3 style="margin:0; color: white; font-size: 1.2rem;">🤖 AI Energy Expert</h3>
-                <p style="margin:0; font-size: 0.8rem; color: rgba(255,255,255,0.9);">Hỗ trợ tiết kiệm điện 24/7</p>
+            <div style="background: linear-gradient(90deg, #3b82f6, #06b6d4); padding: 10px; text-align: center; border-radius: 10px 10px 0 0; margin: -16px -16px 10px -16px;">
+                <h4 style="margin:0; color: white;">🤖 AI Energy Expert</h4>
             </div>
         """, unsafe_allow_html=True)
 
-        # Lịch sử chat
+        # 1. Khởi tạo lịch sử chat nếu chưa có
         if "chat_history" not in st.session_state:
-            st.session_state.chat_history = [{"role": "assistant", "content": "👋 Xin chào! Tôi có thể giúp gì cho bạn?"}]
+            st.session_state.chat_history = [
+                {"role": "assistant", "content": "👋 Xin chào! Tôi là trợ lý tiết kiệm điện của bạn. Bạn cần giúp gì không?"}
+            ]
 
-        # Container chat
-        chat_container = st.container(height=300)
-        with chat_container:
-            for msg in st.session_state.chat_history:
-                # Avatar text thay vì ảnh
-                avt = "🧑‍💻" if msg["role"] == "user" else "🤖"
-                with st.chat_message(msg["role"], avatar=avt):
-                    st.write(msg["content"])
+        # 2. Hiển thị lịch sử chat từ session_state
+        # Sử dụng container để tin nhắn cũ luôn hiển thị
+        for msg in st.session_state.chat_history:
+            avt = "🧑‍💻" if msg["role"] == "user" else "🤖"
+            with st.chat_message(msg["role"], avatar=avt):
+                st.markdown(msg["content"])
 
-        # Input
+        # 3. Xử lý Input từ người dùng
         if prompt := st.chat_input("Nhập câu hỏi...", key="float_chat_input"):
+            
+            # CHỈ THÊM VÀO LỊCH SỬ 1 LẦN DUY NHẤT
             st.session_state.chat_history.append({"role": "user", "content": prompt})
-            with chat_container:
-                st.chat_message("user", avatar="🧑‍💻").write(prompt)
+            
+            # Hiển thị ngay tin nhắn của user lên giao diện
+            with st.chat_message("user", avatar="🧑‍💻"):
+                st.markdown(prompt)
+            
+            # 4. TỰ ĐỘNG GỌI AI VÀ TRẢ LỜI
+            with st.chat_message("assistant", avatar="🤖"):
+                message_placeholder = st.empty()
+                message_placeholder.markdown("*(Đang suy nghĩ...)*")
                 
-                with st.chat_message("assistant", avatar="🤖"):
-                    message_placeholder = st.empty()
-                    message_placeholder.markdown("typing...") 
-                    
-                    try:
-                        full_response = ask_gemini(prompt)
-                    except Exception:
-                        full_response = "Lỗi kết nối AI. Vui lòng thử lại."
+                try:
+                    # Gọi hàm Gemini mới từ ai_engine.py
+                    response = ask_gemini(prompt)
                     
                     # Hiệu ứng gõ chữ
-                    display_text = ""
-                    for chunk in full_response.split():
-                        display_text += chunk + " "
-                        time.sleep(0.05)
-                        message_placeholder.markdown(display_text + "▌")
-                    message_placeholder.markdown(full_response)
-            
-            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
-            st.rerun()
+                    full_res = ""
+                    for chunk in response.split():
+                        full_res += chunk + " "
+                        time.sleep(0.02)
+                        message_placeholder.markdown(full_res + "▌")
+                    message_placeholder.markdown(response)
+                    
+                    # Lưu câu trả lời của AI vào lịch sử
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    
+                    # Rerun để đồng bộ toàn bộ khung chat
+                    st.rerun()
+                    
+                except Exception as e:
+                    message_placeholder.error(f"Lỗi: {str(e)}")
 
-        # Nút xóa
-        col1, col2 = st.columns([4, 1])
-        with col2:
-            if st.button("🗑️", help="Xóa lịch sử"):
-                st.session_state.chat_history = []
-                st.rerun()
+        # Nút xóa lịch sử
+        if st.button("🗑️ Xóa hội thoại", use_container_width=True):
+            st.session_state.chat_history = [
+                {"role": "assistant", "content": "👋 Lịch sử đã xóa. Tôi có thể giúp gì thêm?"}
+            ]
+            st.rerun()

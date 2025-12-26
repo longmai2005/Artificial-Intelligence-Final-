@@ -3,7 +3,7 @@ import sys
 import os
 import time
 
-# 1. Cấu hình trang (Bắt buộc phải ở dòng đầu tiên)
+# 1. Cấu hình trang
 st.set_page_config(page_title="Smart Energy", layout="wide", page_icon="⚡")
 
 # 2. Thiết lập đường dẫn import

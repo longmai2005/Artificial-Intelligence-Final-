@@ -55,7 +55,7 @@ def authenticate(username, password):
     if users[username]["password"] != password:
         return "WRONG_PASS" # Trả về chuỗi để app.py nhận diện
     
-    # Nếu đúng, cập nhật thời gian đăng nhập (Fix lỗi Status Offline ở câu hỏi trước)
+    # Nếu đúng, cập nhật thời gian đăng nhập
     from datetime import datetime
     users[username]["last_login"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(USER_DB_PATH, "w") as f:

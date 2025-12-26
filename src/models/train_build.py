@@ -20,7 +20,7 @@ import joblib
 from datetime import datetime
 
 #=============================================================================
-# 1. DATA LOADING & PREPARATION (FIXED)
+# 1. DATA LOADING & PREPARATION
 #=============================================================================
 
 def load_and_prepare_data(filepath='data/cleaned_dataset.csv'):
@@ -83,7 +83,7 @@ def time_split_and_scale(X, y, datetime_index, test_size=0.2):
             scaler, datetime_train, datetime_test)
 
 #=============================================================================
-# 2. EVALUATION METRICS (FIXED - KW TO KWH CONVERSION)
+# 2. EVALUATION METRICS (KW TO KWH CONVERSION)
 #=============================================================================
 
 def calculate_metrics(y_true, y_pred, model_name="Model", 
@@ -150,7 +150,7 @@ def calculate_metrics(y_true, y_pred, model_name="Model",
     }
 
 #=============================================================================
-# 3. BASELINE MODELS (FIXED)
+# 3. BASELINE MODELS
 #=============================================================================
 
 def baseline_models(y_train, y_test, datetime_test):
@@ -169,7 +169,7 @@ def baseline_models(y_train, y_test, datetime_test):
         datetime_index=datetime_test, convert_to_kwh=True
     )
     
-    # 2. Moving Average (FIXED - no recursive prediction)
+    # 2. Moving Average (no recursive prediction)
     print("\n2️⃣ Moving Average (24h window)...")
     window = 1440  # 24 hours × 60 minutes
     
@@ -185,7 +185,7 @@ def baseline_models(y_train, y_test, datetime_test):
     return results
 
 #=============================================================================
-# 4. TRADITIONAL ML MODELS (FIXED)
+# 4. TRADITIONAL ML MODELS
 #=============================================================================
 
 def train_traditional_ml(X_train, y_train, X_test, y_test, datetime_test):
@@ -258,7 +258,7 @@ def train_traditional_ml(X_train, y_train, X_test, y_test, datetime_test):
     return results, models
 
 #=============================================================================
-# 5. DEEP LEARNING (FIXED SEQ_LENGTH)
+# 5. DEEP LEARNING
 #=============================================================================
 
 def create_sequences(X, y, seq_length=60):
@@ -370,7 +370,7 @@ def train_deep_learning(X_train_scaled, y_train, X_test_scaled, y_test,
     return results, lstm_model
 
 #=============================================================================
-# 6. MODEL COMPARISON & SELECTION (ENHANCED)
+# 6. MODEL COMPARISON & SELECTION
 #=============================================================================
 
 def compare_and_select_best(all_results):
@@ -515,7 +515,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     print("   ✅ Report saved: model_report.txt")
 
 #=============================================================================
-# 9. MAIN PIPELINE (FIXED)
+# 9. MAIN PIPELINE
 #=============================================================================
 
 def main_pipeline(filepath='data/cleaned_dataset.csv', run_deep_learning=True):
@@ -539,15 +539,15 @@ def main_pipeline(filepath='data/cleaned_dataset.csv', run_deep_learning=True):
     (X_train, X_test, y_train, y_test, scaler, 
      datetime_train, datetime_test) = time_split_and_scale(X, y, datetime_index)
     
-    # 2. Baseline models (FIXED)
+    # 2. Baseline models
     baseline_results = baseline_models(y_train, y_test, datetime_test)
     
-    # 3. Traditional ML models (FIXED)
+    # 3. Traditional ML models
     ml_results, ml_models = train_traditional_ml(
         X_train, y_train, X_test, y_test, datetime_test
     )
     
-    # 4. Deep Learning (FIXED)
+    # 4. Deep Learning
     dl_results = {}
     if run_deep_learning:
         dl_results, lstm_model = train_deep_learning(
