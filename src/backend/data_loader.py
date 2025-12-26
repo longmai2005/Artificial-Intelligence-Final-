@@ -34,10 +34,10 @@ def load_dataset(file_path="cleaned_dataset.csv", nrows=None):
             st.error(f"Lỗi khi đọc file dữ liệu thật: {e}")
             # Nếu lỗi thì rơi xuống phần DEMO bên dưới
     
-    # --- CHẾ ĐỘ DEMO (Chỉ chạy khi không có file thật) ---
+    # --- CHẾ ĐỘ DEMO ---
     st.warning("⚠️ Không tìm thấy dữ liệu thật. Đang chạy chế độ DEMO (Dữ liệu giả lập).")
     
-    # 1. Tạo timeline (Giữ nguyên logic cũ của bạn)
+    # 1. Tạo timeline
     date_rng = pd.date_range(start='2006-12-16', end='2010-11-26', freq='min')
     df = pd.DataFrame(date_rng, columns=['dt'])
     df = df.set_index('dt')
@@ -55,7 +55,7 @@ def load_dataset(file_path="cleaned_dataset.csv", nrows=None):
     df['Global_intensity'] = (df['Global_active_power'] * 1000) / df['Voltage']
     df['Global_reactive_power'] = df['Global_active_power'] * 0.48 + np.random.normal(0, 0.05, n)
     
-    # --- B. Thêm features cần thiết cho model (Đồng bộ với clean_data.py) ---
+    # --- B. Thêm features cần thiết cho model ---
     df['hour'] = df.index.hour
     df['weekday'] = df.index.dayofweek
     df['month'] = df.index.month

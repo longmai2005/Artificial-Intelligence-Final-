@@ -20,7 +20,7 @@ def render_dashboard(current_data, current_time):
     c_left, c_right = st.columns([2, 1])
     
     with c_left:
-        # Gauge Chart (Đơn giản hóa bằng code Metric trên, hoặc vẽ thêm gauge nếu muốn)
+        # Gauge Chart 
         st.info(f"Thời gian hệ thống: **{current_time.strftime('%H:%M - %d/%m/%Y')}**")
         if 17 <= current_time.hour <= 20:
              st.error("⚡ ĐANG LÀ GIỜ CAO ĐIỂM (Giá điện x1.8)")
@@ -32,8 +32,6 @@ def render_dashboard(current_data, current_time):
         sub1 = current_data['Sub_metering_1']
         sub2 = current_data['Sub_metering_2']
         sub3 = current_data['Sub_metering_3']
-        # Tính phần 'Other' (Tổng - 3 cái con). Lưu ý đơn vị dataset: Sub là Watt-hour, Global là kW.
-        # Để đơn giản cho demo, ta vẽ 3 cái sub thôi
         df_pie = {"Device": ["Bếp", "Giặt là", "Điều hòa/Nóng lạnh"], "Value": [sub1, sub2, sub3]}
         fig = px.pie(df_pie, values='Value', names='Device', title="Phân bổ thiết bị chính")
         fig.update_layout(height=300, margin=dict(t=30, b=10, l=10, r=10))

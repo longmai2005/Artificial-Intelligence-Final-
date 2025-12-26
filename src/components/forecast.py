@@ -18,7 +18,7 @@ def render_forecast(predictor, history_df, current_time):
     # Lấy chính xác 24 giá trị 'Global_active_power' gần nhất
     input_data = past_24h['Global_active_power'].values[-24:] 
     
-    # 3. Thực hiện dự báo thông qua Predictor (Chỉ gọi 1 lần duy nhất)
+    # 3. Thực hiện dự báo thông qua Predictor
     # Sử dụng spinner để thông báo cho người dùng khi AI đang xử lý
     with st.spinner('AI đang tính toán dựa trên mô hình RandomForest...'):
         forecast_vals = predictor.predict_next_24h(input_data)

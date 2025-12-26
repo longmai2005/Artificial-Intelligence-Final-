@@ -4,18 +4,43 @@ import json
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
-import time  # <--- QUAN TRỌNG: Đã thêm thư viện này để fix lỗi
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from src.backend.auth import load_users, USER_DB_PATH
 from src.backend.history import load_history
 from src.utils.style import card_container
-# Import Logger (Đảm bảo file src/backend/logger.py đã tồn tại)
+
 try:
     from src.backend.logger import get_recent_logs, log_info
 except ImportError:
     # Hàm giả lập nếu chưa có logger
     def get_recent_logs(limit=10): return []
     def log_info(msg): pass
+
+def get_visit_stats():
+    """
+    Hàm lấy dữ liệu truy cập thực tế từ logs thay vì dùng random
+    """
+    raw_logs = get_recent_logs(limit=1000) # Lấy lượng log đủ lớn để thống kê
+    
+    # Tạo danh sách 7 ngày gần nhất
+    now = datetime.now()
+    dates = [(now - timedelta(days=i)).strftime("%d/%m") for i in range(6, -1, -1)]
+    visit_counts = {date: 0 for date in dates}
+    
+    for line in raw_logs:
+        try:
+            # Giả định log có định dạng: [INFO] YYYY-MM-DD HH:MM:SS - Message
+            if " - " in line:
+                timestamp_str = line.split("] ")[1].split(" - ")[0]
+                dt = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+                date_key = dt.strftime("%d/%m")
+                if date_key in visit_counts:
+                    visit_counts[date_key] += 1
+        except:
+            continue
+            
+    return list(visit_counts.keys()), list(visit_counts.values())
 
 def delete_user(username):
     """Xóa user và ghi log"""
@@ -93,10 +118,16 @@ def render_admin_page():
         with c_left:
             with st.container(border=True):
                 st.markdown("##### 📈 Truy cập tuần qua")
-                dates = pd.date_range(end=datetime.now(), periods=7).strftime("%d/%m")
-                visits = np.random.randint(50, 200, 7)
+                dates, visits = get_visit_stats()
                 fig = go.Figure(go.Scatter(x=dates, y=visits, fill='tozeroy', line=dict(color='#8b5cf6')))
-                fig.update_layout(height=300, margin=dict(l=20,r=20,t=20,b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                fig.update_layout(
+                    height=300, 
+                    margin=dict(l=20,r=20,t=20,b=20), 
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    plot_bgcolor='rgba(0,0,0,0)', 
+                    xaxis=dict(showgrid=False),
+                    yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)')
+                )
                 st.plotly_chart(fig, width='stretch')
         
         with c_right:

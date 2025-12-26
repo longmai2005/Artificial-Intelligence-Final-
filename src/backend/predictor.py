@@ -63,7 +63,7 @@ class EnergyPredictor:
     def predict_next_24h(self, last_sequence):
         """Dự báo 24 giờ tới sử dụng model AI thật"""
         if self.model is None:
-            return last_sequence * (1 + np.random.uniform(-0.1, 0.1, 24))
+            return np.full(24, np.mean(last_sequence))
 
         try:
             now = datetime.now()
@@ -103,7 +103,7 @@ class EnergyPredictor:
         """
         house_factor = self.HOUSEHOLD_FACTORS['house_type'].get(user_params.get('house_type', 'Nhà phố'), 1.0)
         
-        # 1. Tính toán Factor (Giữ nguyên logic cũ của bạn)
+        # 1. Tính toán Factor 
         num_people = user_params.get('num_people', 3)
         people_factor = 1.0 + ((num_people - self.HOUSEHOLD_FACTORS['people_base']) * self.HOUSEHOLD_FACTORS['people_increment'])
         
@@ -112,21 +112,19 @@ class EnergyPredictor:
         
         device_kwh = {}
         month = current_month or datetime.now().month
-        season = 'winter' if month in [12,1,2] else 'spring' if month in [3,4,5] else 'summer' if month in [6,7,8] else 'fall'
+        season = 'summer' if month in [6,7,8] else 'winter' if month in [12,1,2] else 'spring'
         
-        # Tính toán tiêu thụ thiết bị (Giữ nguyên logic cũ)
+        # Tính toán tiêu thụ thiết bị
         num_ac = user_params.get('num_ac', 0)
-        if num_ac > 0:
-            ac = self.DEVICE_PROFILES['ac']
-            device_kwh['ac'] = num_ac * ac['power_kw'] * ac['hours_per_day'] * ac['seasonal_factor'][season] * 30
-        
-        device_kwh['fridge'] = user_params.get('num_fridge', 1) * 0.15 * 24 * 0.4 * 30
-        device_kwh['lighting'] = (num_people * 3 + area_m2/10) * 0.01 * 10 * 30
-        device_kwh['other'] = 0.05 * (area_m2/50) * 24 * 30
+        ac_profile = self.DEVICE_PROFILES['ac']
+        device_kwh['Máy lạnh'] = num_ac * ac_profile['power_kw'] * ac_profile['hours_per_day'] * ac_profile['seasonal_factor'][season] * 30
+        device_kwh['Tủ lạnh'] = user_params.get('num_fridge', 1) * 0.15 * 24 * 0.4 * 30
+        device_kwh['TV'] = user_params.get('num_tv', 0) * self.DEVICE_PROFILES['tv']['power_kw'] * self.DEVICE_PROFILES['tv']['hours_per_day'] * 30
+        washer = self.DEVICE_PROFILES['washer']
+        device_kwh['Máy giặt'] = user_params.get('num_washer', 0) * washer['power_kw'] * washer['times_per_week'] * washer['hours_per_time'] * 4
+        device_kwh['Bình nóng lạnh'] = user_params.get('num_water_heater', 0) * self.DEVICE_PROFILES['water_heater']['power_kw'] * self.DEVICE_PROFILES['water_heater']['hours_per_day'] * 30
         
         total_device_kwh = sum(device_kwh.values())
-
-        # --- ĐOẠN SỬA LẠI LOGIC CONFIDENCE ---
 
         # A. Độ tin cậy theo số người: Coi là tin cậy 100% nếu từ 1 đến 6 người
         if 1 <= num_people <= 6:
@@ -161,7 +159,7 @@ class EnergyPredictor:
         """
         DỰ BÁO CHÍNH: Kết hợp AI RandomForest và Heuristic
         """
-        # --- BƯỚC 1: LẤY BASELINE (ƯU TIÊN AI) ---
+        # --- BƯỚC 1: LẤY BASELINE 
         ai_forecast_daily_kwh = None
         if self.model is not None:
             try:
@@ -185,20 +183,32 @@ class EnergyPredictor:
         device_monthly = adjustment['total_device_kwh']
         
         # --- BƯỚC 3: BLEND (Trộn AI và Heuristic) ---
-        # Nếu thiết bị user khai báo khớp với AI pattern (~ ratio 1.0) -> Tin AI 80%
         ratio = device_monthly / baseline_monthly if baseline_monthly > 0 else 1.0
-        pattern_weight = 0.8 if 0.8 <= ratio <= 1.2 else 0.5
+        diff = abs(1.0 - ratio)
         
-        predicted_kwh = (baseline_monthly * pattern_weight) + (device_monthly * (1 - pattern_weight))
-        predicted_kwh *= 0.9 # Calibration factor
+        pattern_weight = max(0.3, min(0.8, 1.0 - diff)) 
+        device_weight = 1.0 - pattern_weight
+
+        # Lấy hệ số loại nhà từ adjustment
+        house_type_factor = adjustment['overall_factor'] 
+
+        # Kết quả dự báo thô: Phải nhân với hệ số loại nhà (Biệt thự sẽ tăng, Chung cư sẽ giảm)
+        raw_predicted_kwh = ((baseline_monthly * pattern_weight) + (device_monthly * device_weight)) * house_type_factor
+        
+        # Áp dụng Calibration 0.9
+        predicted_kwh = raw_predicted_kwh * 0.9
         
         # --- BƯỚC 4: KẾT QUẢ ---
+        raw_shape = self._extract_hourly_pattern(history_df)
+        # Tính mức kWh trung bình mỗi giờ dựa trên dự báo mới
+        avg_hourly_kwh = (predicted_kwh / days) / 24
+        # Nhân hình dạng với mức trung bình để ra pattern thực tế
+        scaled_pattern = [val * avg_hourly_kwh for val in raw_shape]
+        
         confidence = adjustment['confidence']
         margin = predicted_kwh * (1 - confidence) * 0.5
-        weights = {
-            'pattern': pattern_weight,
-            'device': (1 - pattern_weight)
-        }
+        print(f"DEBUG: House Factor used: {house_type_factor}")
+
         return {
             'total_kwh': predicted_kwh,
             'lower_bound': predicted_kwh - margin,
@@ -209,19 +219,40 @@ class EnergyPredictor:
             'device_kwh': device_monthly,
             'baseline_kwh': baseline_monthly,
             'adjustment_details': adjustment,
-            'hourly_pattern': self._extract_hourly_pattern(history_df),
-            'blend_weights': weights,
+            'hourly_pattern': scaled_pattern,
+            'blend_weights': {
+                'pattern': pattern_weight,
+                'device': device_weight
+            },
             'peak_hours': [i for i, h in enumerate(self._extract_hourly_pattern(history_df)) if h > 1.2]
         }
-
+        
     def _extract_hourly_pattern(self, history_df):
-        if 'hour' in history_df.columns:
-            hourly_avg = history_df.groupby('hour')['Global_active_power'].mean()
-        else:
-            hours = np.arange(24)
-            hourly_avg = pd.Series(0.5 + 1.5*np.exp(-((hours-8)**2)/8) + 2.5*np.exp(-((hours-19)**2)/8))
-        return (hourly_avg.values / hourly_avg.values.mean()).tolist()
-
+        """Trích xuất pattern tiêu thụ thực tế từ dữ liệu lịch sử"""
+        try:
+            # Kiểm tra nếu chưa có cột 'hour', tạo từ index (nếu index là datetime)
+            df = history_df.copy()
+            if 'hour' not in df.columns:
+                df['hour'] = df.index.hour
+                
+            if 'Global_active_power' in df.columns:
+                # Tính giá trị trung bình tiêu thụ cho mỗi khung giờ (0-23h)
+                hourly_avg = df.groupby('hour')['Global_active_power'].mean()
+                # Đảm bảo đủ 24 giờ, điền 0 nếu giờ đó không có dữ liệu
+                pattern = hourly_avg.reindex(range(24), fill_value=0).values
+                
+                # Chuẩn hóa: Nếu hoàn toàn không có dữ liệu, trả về mức cơ bản 0.5
+                if pattern.sum() == 0:
+                    return [0.5] * 24
+                    
+                return pattern.tolist()
+        except Exception as e:
+            print(f"⚠️ Lỗi trích xuất pattern: {e}")
+            
+        # Fallback: Trả về mức tiêu thụ mặc định
+        return [0.5, 0.4, 0.3, 0.3, 0.4, 0.6, 1.2, 1.5, 1.0, 0.8, 0.7, 0.7, 
+                0.8, 0.9, 0.8, 0.9, 1.1, 1.8, 2.2, 2.1, 1.5, 1.0, 0.7, 0.6]
+    
     def get_saving_recommendations(self, result, user_params):
         """
         Tạo đề xuất tiết kiệm THÔNG MINH dựa trên:
