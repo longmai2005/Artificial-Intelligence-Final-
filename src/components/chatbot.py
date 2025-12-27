@@ -158,7 +158,7 @@ def render_floating_chatbot():
                     message_placeholder.error(f"Lỗi: {str(e)}")
 
         # Nút xóa lịch sử
-        if st.button("🗑️ Xóa hội thoại", use_container_width=True):
+        if st.button("🗑️ Xóa hội thoại", width='stretch'):
             st.session_state.chat_history = [
                 {"role": "assistant", "content": "👋 Lịch sử đã xóa. Tôi có thể giúp gì thêm?"}
             ]

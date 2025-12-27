@@ -315,6 +315,444 @@
             "inputs": "Bi\u1ec7t th\u1ef1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
             "kwh": 212.45,
             "cost": 434266
+        },
+        {
+            "timestamp": "2025-12-26 14:57:02",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 212.45,
+            "cost": 434266
+        },
+        {
+            "timestamp": "2025-12-26 15:17:20",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 163.42,
+            "cost": 321031
+        },
+        {
+            "timestamp": "2025-12-26 17:59:38",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 845.25,
+            "cost": 2381183
+        },
+        {
+            "timestamp": "2025-12-26 17:59:56",
+            "inputs": "Chung c\u01b0 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 552.66,
+            "cost": 1459242
+        },
+        {
+            "timestamp": "2025-12-26 18:00:09",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 845.25,
+            "cost": 2381183
+        },
+        {
+            "timestamp": "2025-12-26 18:04:46",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 650.19,
+            "cost": 1766556
+        },
+        {
+            "timestamp": "2025-12-26 18:04:54",
+            "inputs": "Chung c\u01b0 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 552.66,
+            "cost": 1459242
+        },
+        {
+            "timestamp": "2025-12-26 18:05:01",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 4 ng\u01b0\u1eddi - 100m\u00b2",
+            "kwh": 845.25,
+            "cost": 2381183
+        },
+        {
+            "timestamp": "2025-12-26 18:05:13",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 4 ng\u01b0\u1eddi - 200m\u00b2",
+            "kwh": 1408.75,
+            "cost": 4156771
+        },
+        {
+            "timestamp": "2025-12-26 20:16:13",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 163.42,
+            "cost": 321031
+        },
+        {
+            "timestamp": "2025-12-26 20:52:45",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 163.42,
+            "cost": 321031
+        },
+        {
+            "timestamp": "2025-12-26 20:52:55",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 212.45,
+            "cost": 434266
+        },
+        {
+            "timestamp": "2025-12-26 20:53:05",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 7 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 663.83,
+            "cost": 1809522
+        },
+        {
+            "timestamp": "2025-12-26 21:00:40",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 163.42,
+            "cost": 321031
+        },
+        {
+            "timestamp": "2025-12-26 21:01:06",
+            "inputs": "Bi\u1ec7t th\u1ef1 - 5 ng\u01b0\u1eddi - 62m\u00b2",
+            "kwh": 703.94,
+            "cost": 1935920
+        },
+        {
+            "timestamp": "2025-12-26 21:13:19",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 68.86,
+            "cost": 125486
+        },
+        {
+            "timestamp": "2025-12-26 21:13:25",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 24.59,
+            "cost": 44412
+        },
+        {
+            "timestamp": "2025-12-26 21:13:39",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 869.84,
+            "cost": 2458655
+        },
+        {
+            "timestamp": "2025-12-26 21:13:45",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 835.41,
+            "cost": 2350172
+        },
+        {
+            "timestamp": "2025-12-26 21:13:52",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 715.87,
+            "cost": 1973493
+        },
+        {
+            "timestamp": "2025-12-26 21:14:04",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 371.58,
+            "cost": 891530
+        },
+        {
+            "timestamp": "2025-12-26 21:53:24",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 84.43,
+            "cost": 154543
+        },
+        {
+            "timestamp": "2025-12-26 21:53:37",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 75.99,
+            "cost": 138789
+        },
+        {
+            "timestamp": "2025-12-26 22:01:27",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 364.79,
+            "cost": 870823
+        },
+        {
+            "timestamp": "2025-12-26 22:02:03",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - Th\u00e1ng 1",
+            "kwh": 364.79,
+            "cost": 870823
+        },
+        {
+            "timestamp": "2025-12-26 22:02:15",
+            "inputs": "Chung c\u01b0 - 3 ng\u01b0\u1eddi - Th\u00e1ng 7",
+            "kwh": 1844.57,
+            "cost": 5530052
+        },
+        {
+            "timestamp": "2025-12-26 22:04:47",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 7",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:05:04",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 11",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:05:13",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 8",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:05:22",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 9",
+            "kwh": 876.91,
+            "cost": 2480956
+        },
+        {
+            "timestamp": "2025-12-26 22:05:30",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:05:40",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 7",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:06:01",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 1",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:06:10",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:06:18",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 3",
+            "kwh": 503.45,
+            "cost": 1304171
+        },
+        {
+            "timestamp": "2025-12-26 22:06:33",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 4",
+            "kwh": 503.45,
+            "cost": 1304171
+        },
+        {
+            "timestamp": "2025-12-26 22:06:40",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 5",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:06:52",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 1",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:07:12",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:07:56",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 3",
+            "kwh": 503.45,
+            "cost": 1304171
+        },
+        {
+            "timestamp": "2025-12-26 22:08:06",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 3",
+            "kwh": 503.45,
+            "cost": 1304171
+        },
+        {
+            "timestamp": "2025-12-26 22:08:17",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 4",
+            "kwh": 503.45,
+            "cost": 1304171
+        },
+        {
+            "timestamp": "2025-12-26 22:08:36",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 5",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:08:57",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:09:13",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 7",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:09:26",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 8",
+            "kwh": 1623.84,
+            "cost": 4834526
+        },
+        {
+            "timestamp": "2025-12-26 22:09:50",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 9",
+            "kwh": 876.91,
+            "cost": 2480956
+        },
+        {
+            "timestamp": "2025-12-26 22:10:05",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 10",
+            "kwh": 876.91,
+            "cost": 2480956
+        },
+        {
+            "timestamp": "2025-12-26 22:10:20",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 11",
+            "kwh": 354.06,
+            "cost": 838097
+        },
+        {
+            "timestamp": "2025-12-26 22:25:36",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 3",
+            "kwh": 132.7,
+            "cost": 254456
+        },
+        {
+            "timestamp": "2025-12-26 22:25:43",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 1",
+            "kwh": 73.33,
+            "cost": 133827
+        },
+        {
+            "timestamp": "2025-12-26 22:25:50",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 75.17,
+            "cost": 137263
+        },
+        {
+            "timestamp": "2025-12-26 22:25:58",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 3",
+            "kwh": 132.7,
+            "cost": 254456
+        },
+        {
+            "timestamp": "2025-12-26 22:26:35",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 1",
+            "kwh": 73.33,
+            "cost": 133827
+        },
+        {
+            "timestamp": "2025-12-26 22:26:45",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 75.17,
+            "cost": 137263
+        },
+        {
+            "timestamp": "2025-12-26 22:26:51",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 4",
+            "kwh": 243.33,
+            "cost": 518545
+        },
+        {
+            "timestamp": "2025-12-26 22:27:07",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 7",
+            "kwh": 409.76,
+            "cost": 1008964
+        },
+        {
+            "timestamp": "2025-12-26 22:27:15",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 11",
+            "kwh": 128.42,
+            "cost": 245180
+        },
+        {
+            "timestamp": "2025-12-26 23:03:36",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 12",
+            "kwh": 83.22,
+            "cost": 152291
+        },
+        {
+            "timestamp": "2025-12-26 23:03:42",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 12",
+            "kwh": 214.64,
+            "cost": 440259
+        },
+        {
+            "timestamp": "2025-12-26 23:03:52",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - Th\u00e1ng 12",
+            "kwh": 322.32,
+            "cost": 741266
+        },
+        {
+            "timestamp": "2025-12-26 23:03:57",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 871.17,
+            "cost": 2462869
+        },
+        {
+            "timestamp": "2025-12-26 23:04:39",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 2 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 304.55,
+            "cost": 687088
+        },
+        {
+            "timestamp": "2025-12-26 23:05:07",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 65.47,
+            "cost": 119157
+        },
+        {
+            "timestamp": "2025-12-26 23:05:38",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - Th\u00e1ng 6",
+            "kwh": 586.57,
+            "cost": 1566087
+        },
+        {
+            "timestamp": "2025-12-26 23:31:15",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 12",
+            "kwh": 83.22,
+            "cost": 152291
+        },
+        {
+            "timestamp": "2025-12-26 23:31:29",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - Th\u00e1ng 2",
+            "kwh": 75.17,
+            "cost": 137263
+        },
+        {
+            "timestamp": "2025-12-27 00:38:10",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 153.35,
+            "cost": 323150
+        },
+        {
+            "timestamp": "2025-12-27 00:41:01",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 415.76,
+            "cost": 1110088
+        },
+        {
+            "timestamp": "2025-12-27 00:41:20",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 4 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 476.15,
+            "cost": 1315606
+        },
+        {
+            "timestamp": "2025-12-27 15:52:19",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 469.64,
+            "cost": 1293446
+        },
+        {
+            "timestamp": "2025-12-27 15:59:43",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 423.0,
+            "cost": 1134735
+        },
+        {
+            "timestamp": "2025-12-27 15:59:56",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 503.4,
+            "cost": 1408333
         }
     ]
 }
