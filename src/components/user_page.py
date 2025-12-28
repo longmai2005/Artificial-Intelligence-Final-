@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Import module
-from src.backend.history import save_history, load_history
+from src.backend.history import save_history, load_history, clear_history, delete_selected_history
 from src.backend.logic_engine import calculate_evn_bill
 from src.backend.predictor import EnergyPredictor
 from src.backend.data_loader import load_dataset
@@ -139,7 +139,8 @@ def render_user_page(username, name):
                             'total_cost': total_cost, 'cost_breakdown': cost_breakdown,
                             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         }
-                        
+                        if 'recommendations' in st.session_state:
+                            del st.session_state['recommendations']
                         # Lưu history
                         save_history(username, f"{house_type} - {num_people} người - {area_m2}m²", total_kwh, total_cost)
                         
@@ -206,165 +207,326 @@ def render_user_page(username, name):
             st.warning("⚠️ Vui lòng dự đoán trước!")
         else:
             pred = st.session_state['prediction_result']
-            result = pred['result']
-            user_params = pred['user_params']
+            predictor = get_predictor() # Khởi tạo predictor
             
-            predictor = get_predictor()
-            recommendations = predictor.get_saving_recommendations(result, user_params)
+            # --- XỬ LÝ LOGIC ---
+            # 1. Nếu chưa có recommendations trong session, tạo mặc định (Rule-based)
+            if 'recommendations' not in st.session_state:
+                st.session_state['recommendations'] = predictor.get_saving_recommendations(
+                    pred['result'], 
+                    pred['user_params']
+                )
 
+            # 2. Khu vực điều khiển AI
+            api_key = st.secrets.get("GEMINI_API_KEY", None)
+            if not api_key:
+                api_key = st.text_input("Nhập Gemini API Key để kích hoạt AI (Bỏ trống dùng Logic thường)", type="password")
+
+            # Nút bấm nâng cấp lên AI
+            # Logic: Nếu bấm nút -> Gọi AI -> Cập nhật vào session_state
+            if st.button("🤖 Phân tích chuyên sâu (AI)", type="primary"):
+                with st.spinner("AI đang suy nghĩ giải pháp tối ưu cho nhà bạn..."):
+                    try:
+                        ai_recs = predictor.get_ai_recommendations(
+                            pred['result'], 
+                            pred['user_params'], 
+                            api_key=api_key if api_key else None
+                        )
+                        st.session_state['recommendations'] = ai_recs
+                        st.success("Đã cập nhật lời khuyên từ AI!")
+                    except Exception as e:
+                        st.error(f"Lỗi AI: {str(e)}")
+
+            # 3. Lấy dữ liệu từ session để hiển thị (Đảm bảo biến luôn tồn tại)
+            recommendations = st.session_state['recommendations']
+
+            # --- HIỂN THỊ GIAO DIỆN ---
             col1, col2 = st.columns([2, 1])
             
             with col1:
                 st.markdown("#### 📋 Danh sách Đề xuất")
-                for rec in recommendations:
-                    priority_colors = {
-                        'high': '🔴 CAO',
-                        'medium': '🟡 TRUNG BÌNH',
-                        'low': '🟢 THẤP'
-                    }
-                    
-                    with st.container(border=True):
-                        st.markdown(f"### {priority_colors.get(rec['priority'], '')} {rec['device']}")
-
-                        col_a, col_b = st.columns(2)
-                        with col_a:
-                            st.caption("**Hiện tại:**")
-                            st.write(rec['current'])
-                        with col_b:
-                            st.caption("**Tiết kiệm:**")
-                            st.write(rec['saving'])
+                if not recommendations:
+                    st.info("Chưa có đề xuất nào.")
+                else:
+                    for rec in recommendations:
+                        priority_colors = {
+                            'high': '🔴 CAO',
+                            'medium': '🟡 TRUNG BÌNH',
+                            'low': '🟢 THẤP'
+                        }
+                        prio = rec.get('priority', 'low')
+                        device_name = rec.get('device', 'Thiết bị')
                         
-                        st.markdown("**🎯 Hành động:**")
-                        for action in rec['actions']:
-                            st.markdown(f"- {action}")
+                        with st.container(border=True):
+                            st.markdown(f"### {priority_colors.get(prio, '🟢')} {device_name}")
+
+                            col_a, col_b = st.columns(2)
+                            with col_a:
+                                st.caption("**Hiện tại:**")
+                                st.write(rec.get('current', 'N/A'))
+                            with col_b:
+                                st.caption("**Tiết kiệm:**")
+                                st.write(rec.get('saving', 'N/A'))
+                            
+                            st.markdown("**🎯 Hành động:**")
+                            actions = rec.get('actions', [])
+                            if isinstance(actions, list):
+                                for action in actions:
+                                    st.markdown(f"- {action}")
+                            else:
+                                st.write(actions)
             
             with col2:
-                st.markdown("#### 💰 Tổng Tiết kiệm")
+                st.markdown("#### 💰 Hiệu quả Kinh tế")
                 
-                total_kwh = result['total_kwh']
-                saving_kwh = total_kwh * 0.2  # Tiết kiệm 20% với đầy đủ biện pháp
-                saving_money = saving_kwh * 2500
+                # Lấy số liệu từ kết quả dự đoán
+                original_kwh = pred['result']['total_kwh']
+                original_cost = pred['total_cost']
                 
+                # --- TÍNH TOÁN TIẾT KIỆM ---
+                # Cách 1: Nếu bạn muốn tính tổng từ các đề xuất cụ thể (Khuyên dùng)
+                # total_saving_kwh = sum([float(rec.get('saving_kwh', 0)) for rec in recommendations])
+                
+                # Cách 2: Tạm tính 20% như code cũ (Dễ hình dung trước)
+                saving_kwh = original_kwh * 0.2
+                
+                # Ước tính tiền tiết kiệm (Lấy % tiền tương ứng % điện)
+                saving_money = original_cost * 0.2 
+                final_cost = original_cost - saving_money
+                
+                # --- HIỂN THỊ GIAO DIỆN MỚI ---
                 with st.container(border=True):
+                    # 1. DÒNG 1: CHI PHÍ GỐC (Nhỏ hơn, màu xám)
+                    st.markdown("""
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #6c757d; font-size: 14px;">Chi phí dự kiến ban đầu:</span>
+                        <span style="color: #6c757d; font-weight: bold; font-size: 16px; text-decoration: line-through;">
+                            {:,.0f} đ
+                        </span>
+                    </div>
+                    """.format(original_cost), unsafe_allow_html=True)
+                    
+                    st.markdown("---") # Đường kẻ ngang
+                    
+                    # 2. DÒNG 2: TIẾT KIỆM (Dùng Metric cho đẹp)
                     st.metric(
-                        "Tiết kiệm/tháng",
-                        f"{saving_money:,.0f} đ",
-                        delta=f"-{saving_kwh:.0f} kWh"
+                        label="Có thể tiết kiệm",
+                        value=f"{saving_money:,.0f} đ",
+                        delta=f"-{saving_kwh:.0f} kWh",
+                        delta_color="normal" # Màu xanh lá
                     )
                     
-                    st.metric(
-                        "Tiết kiệm/năm",
-                        f"{saving_money*12:,.0f} đ"
-                    )
-                    
-                    st.caption("*Nếu áp dụng đầy đủ*")
+                    st.markdown("---")
+
+                    # 3. DÒNG 3: CHI PHÍ MỚI (To, Nổi bật)
+                    st.caption("Chi phí sau khi áp dụng các giải pháp:")
+                    st.markdown(f"""
+                    <h2 style="color: #28a745; margin: 0; padding: 0;">
+                        ≈ {final_cost:,.0f} đ
+                    </h2>
+                    """, unsafe_allow_html=True)
                 
-                # Chart
-                current = total_kwh
-                after = total_kwh - saving_kwh
-                
+                # --- BIỂU ĐỒ SO SÁNH (Giữ nguyên) ---
                 fig = go.Figure()
                 fig.add_trace(go.Bar(
-                    x=['Hiện tại', 'Sau tiết kiệm'],
-                    y=[current, after],
-                    text=[f'{current:.0f}', f'{after:.0f}'],
+                    x=['Trước', 'Sau'],
+                    y=[original_cost, final_cost], # Đổi sang hiển thị Tiền cho đồng bộ
+                    text=[f'{original_cost/1000:.0f}k', f'{final_cost/1000:.0f}k'],
                     textposition='auto',
-                    marker_color=['#ef4444', '#22c55e']
+                    marker_color=['#6c757d', '#28a745'] # Xám và Xanh lá
                 ))
                 fig.update_layout(
-                    height=300,
+                    height=250,
                     showlegend=False,
-                    yaxis_title='kWh/tháng'
+                    title="So sánh chi phí (VNĐ)",
+                    margin=dict(l=20, r=20, t=30, b=20)
                 )
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
     
     # ==================== TAB 3: LỊCH SỬ ====================
 
+    # ==================== TAB 3: LỊCH SỬ (CÓ CHỌN & XÓA) ====================
     with tab3:
-        st.markdown("### 📜 Lịch sử Dự đoán")
+        col_header, col_btn = st.columns([3, 2])
         
+        with col_header:
+            st.markdown("### 📜 Nhật ký Tiêu thụ")
+            
+
+        rows_to_delete = []
+
+        # LOAD DỮ LIỆU
         history = load_history(username)
         
         if history:
             df = pd.DataFrame(history)
             
+            # Đổi tên cột hiển thị
+            display_df = df.rename(columns={
+                'timestamp': 'Thời gian', 
+                'kwh': 'Số điện (kWh)', 
+                'cost': 'Chi phí (VNĐ)'
+            })
+
+            event = st.dataframe(
+                display_df,
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun", 
+                selection_mode="multi-row"
+            )
+            
+            # Lấy danh sách các dòng được chọn
+            selected_rows = event.selection.rows
+            
+            # XỬ LÝ NÚT XÓA (Chỉ hiện khi có dòng được chọn)
+            with col_btn:
+                if selected_rows:
+                    st.write("") # Căn chỉnh lề chút
+                    if st.button(f"🗑️ Xóa {len(selected_rows)} dòng đã chọn", type="primary"):
+                        # 1. Lấy danh sách Timestamp của các dòng đã chọn
+                        # Lưu ý: display_df và df có cùng index nên dùng iloc được
+                        timestamps_to_delete = df.iloc[selected_rows]['timestamp'].tolist()
+                        
+                        # 2. Gọi backend để xóa
+                        if delete_selected_history(username, timestamps_to_delete):
+                            st.toast("Đã xóa thành công!", icon="✅")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Lỗi khi xóa dữ liệu.")
+                else:
+                    # Nút xóa hết cũ (để dự phòng)
+                    if st.button("🗑️ Xóa tất cả lịch sử", type="secondary"):
+                        if clear_history(username):
+                            st.rerun()
+
+            # --- METRIC THỐNG KÊ (Giữ nguyên) ---
+            st.markdown("---")
             col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Số lần", len(history))
-            with col2:
-                st.metric("TB kWh", f"{df['kwh'].mean():.0f}")
-            with col3:
-                st.metric("TB Chi phí", f"{df['cost'].mean():,.0f} đ")
-            
-            st.dataframe(df, width='stretch', hide_index=True)
-            
+            with col1: st.metric("Tổng bản ghi", len(history))
+            with col2: st.metric("TB kWh", f"{df['kwh'].mean():.0f}")
+            with col3: st.metric("TB Chi phí", f"{df['cost'].mean():,.0f} đ")
+
+            # --- BIỂU ĐỒ (Giữ nguyên code biểu đồ của bạn) ---
             if len(history) > 1:
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=list(range(1, len(history)+1)),
-                    y=df['kwh'],
-                    mode='lines+markers'
+                    x=df.index + 1, y=df['kwh'],
+                    name="Điện (kWh)",
+                    mode='lines+markers',
+                    line=dict(color='#3b82f6')
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df.index + 1, y=df['cost'],
+                    name="Tiền (VNĐ)",
+                    mode='lines+markers',
+                    line=dict(color='#ef4444', dash='dot'),
+                    yaxis='y2' 
                 ))
                 fig.update_layout(
-                    title="Xu hướng",
-                    xaxis_title="Lần",
-                    yaxis_title="kWh",
-                    height=300
+                    title="Xu hướng Tiêu thụ & Chi phí",
+                    xaxis_title="Lần dự đoán",
+                    yaxis=dict(title=dict(text="kWh", font=dict(color="#3b82f6"))),
+                    yaxis2=dict(
+                        title=dict(text="VNĐ", font=dict(color="#ef4444")),
+                        overlaying='y',
+                        side='right'
+                    ),
+                    height=350,
+                    hovermode="x unified",
+                    legend=dict(orientation="h", y=1.1)
                 )
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Chưa có lịch sử")
+            st.info("Chưa có lịch sử. Hãy thực hiện dự đoán ở Tab 1!")
     
     # ==================== TAB 4: THỐNG KÊ ====================
     with tab4:
-        st.markdown("### 📊 Thống kê")
+        st.markdown("### 📊 Phân tích Hiệu quả & Môi trường")
         
         if 'prediction_result' in st.session_state:
             pred = st.session_state['prediction_result']
             result = pred['result']
+            user_params = pred['user_params']
             
-            col1, col2 = st.columns(2)
+            total_kwh = result['total_kwh']
+            num_people = user_params.get('num_people', 1)
             
-            with col1:
-                st.markdown("#### 🎯 Đánh giá")
+            # 1. Tính chỉ số kWh bình quân đầu người (Quan trọng để so sánh chuẩn)
+            kwh_per_capita = total_kwh / num_people
+            
+            # Mức chuẩn (Benchmark) tại Việt Nam (Giả định)
+            # Thấp: < 50 kWh/người/tháng
+            # TB: 50 - 100 kWh/người/tháng
+            # Cao: > 100 kWh/người/tháng
+            
+            col_gauge, col_info = st.columns([1.5, 1])
+            
+            with col_gauge:
+                st.markdown("#### ⚡ Mức độ sử dụng điện(Bình quân đầu người)")
                 
-                kwh = result['total_kwh']
-                confidence = result['confidence']
+                # Vẽ biểu đồ đồng hồ (Gauge Chart)
+                fig_gauge = go.Figure(go.Indicator(
+                    mode = "gauge+number+delta",
+                    value = kwh_per_capita,
+                    domain = {'x': [0, 1], 'y': [0, 1]},
+                    title = {'text': "kWh / Người / Tháng", 'font': {'size': 18}},
+                    delta = {'reference': 75, 'increasing': {'color': "red"}, 'decreasing': {'color': "green"}}, # Mức chuẩn là 75
+                    gauge = {
+                        'axis': {'range': [None, 200], 'tickwidth': 1, 'tickcolor': "darkblue"},
+                        'bar': {'color': "rgba(0,0,0,0)"}, # Ẩn thanh bar mặc định đi, dùng kim chỉ (nếu muốn nâng cao) hoặc để màu
+                        'bgcolor': "white",
+                        'borderwidth': 2,
+                        'bordercolor': "gray",
+                        'steps': [
+                            {'range': [0, 50], 'color': '#22c55e'},   # Xanh (Tiết kiệm)
+                            {'range': [50, 100], 'color': '#fbbf24'}, # Vàng (Trung bình)
+                            {'range': [100, 200], 'color': '#ef4444'}  # Đỏ (Cao)
+                        ],
+                        'threshold': {
+                            'line': {'color': "black", 'width': 4},
+                            'thickness': 0.75,
+                            'value': kwh_per_capita
+                        }
+                    }
+                ))
+                fig_gauge.update_layout(height=300, margin=dict(t=30, b=10, l=20, r=20))
+                st.plotly_chart(fig_gauge, use_container_width=True)
+                
+                # Đánh giá bằng chữ
+                if kwh_per_capita < 50:
+                    status = "🏆 Rất Tiết Kiệm"
+                    msg = "Gia đình bạn sử dụng điện rất hiệu quả!"
+                elif kwh_per_capita < 100:
+                    status = "✅ Mức Trung Bình"
+                    msg = "Mức tiêu thụ hợp lý so với mặt bằng chung."
+                else:
+                    status = "⚠️ Mức Cao"
+                    msg = "Hãy xem xét lại các thiết bị làm mát."
+                
+                st.info(f"**Đánh giá:** {status} - {msg}")
 
+            with col_info:
+                st.markdown("#### 🌱 Tác động Môi trường")
                 
-                if kwh > 400:
-                    score = 40
-                    rank = "🥉 Cần cải thiện"
-                elif kwh > 300:
-                    score = 60
-                    rank = "🥈 Khá tốt"
-                elif kwh > 200:
-                    score = 80
-                    rank = "🥇 Tốt"
-                else:
-                    score = 95
-                    rank = "🏆 Xuất sắc"
-                # Điều chỉnh score theo confidence
-                adjusted_score = score * confidence
+                # Hệ số phát thải lưới điện Việt Nam (ước tính): ~0.72 kg CO2 / kWh
+                co2_emission = total_kwh * 0.72
+                trees_needed = co2_emission / 22 # 1 cây trưởng thành hấp thụ khoảng 22kg CO2/năm
                 
-                st.progress(adjusted_score / 100)
-                st.markdown(f"### {rank}")
-                st.caption(f"Điểm: {adjusted_score:.0f}/100")
-                st.caption(f"(Có tính độ tin cậy: {confidence*100:.0f}%)")
-            
-            with col2:
-                st.markdown("#### 🌍 So sánh")
+                with st.container(border=True):
+                    st.metric("Lượng CO2 phát thải", f"{co2_emission:.1f} kg")
+                    st.caption("Tương đương lượng khí thải của xe máy chạy ~500km")
                 
-                avg = 250
-                diff = kwh - avg
-                diff_pct = (diff / avg) * 100
+                with st.container(border=True):
+                    st.metric("Số cây cần trồng bù đắp", f"{trees_needed:.1f} 🌳")
+                    st.caption("Để trung hòa lượng Carbon này trong 1 năm.")
                 
-                if diff > 0:
-                    st.error(f"Cao hơn {diff_pct:.0f}% 📈")
-                else:
-                    st.success(f"Thấp hơn {abs(diff_pct):.0f}% 📉")
-                
-                st.metric("Hộ TB", f"{avg} kWh")
-                st.metric("Bạn", f"{kwh:.0f} kWh")
+                st.markdown("---")
+                st.markdown("**So sánh với hàng xóm:**")
+                st.progress(min(kwh_per_capita/150, 1.0))
+                st.caption(f"Bạn đang dùng nhiều hơn {min(kwh_per_capita/150*100, 100):.0f}% người khác.")
+
         else:
-            st.info("Thực hiện dự đoán để xem thống kê!")
+            st.warning("Vui lòng thực hiện dự đoán ở Tab 1 trước!")
+            st.image("https://cdn-icons-png.flaticon.com/512/6104/6104865.png", width=100) # Ảnh minh họa vui

@@ -9,6 +9,8 @@ import joblib
 import os
 from datetime import datetime, timedelta
 import warnings
+import google.generativeai as genai
+import json
 warnings.filterwarnings('ignore')
 
 class EnergyPredictor:
@@ -340,6 +342,69 @@ class EnergyPredictor:
                 })
 
         return recommendations
+    
+    def get_ai_recommendations(self, result, user_params, api_key=None):
+        if not api_key:
+            return self.get_saving_recommendations(result, user_params)
+
+        try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-1.5-flash') # Model nhanh và rẻ
+
+            # 2. Chuẩn bị dữ liệu (Context) cho AI
+            details = result['adjustment_details']
+            top_devices = sorted(details['device_kwh'].items(), key=lambda x: x[1], reverse=True)[:3]
+            
+            prompt_data = {
+                "user_profile": {
+                    "people": user_params.get('num_people'),
+                    "area": user_params.get('area_m2'),
+                    "house_type": user_params.get('house_type')
+                },
+                "monthly_bill": {
+                    "kwh": result['total_kwh'],
+                    "season": details['season']
+                },
+                "top_consumers": [
+                    {"device": name, "kwh": val, "percent": round((val/result['total_kwh'])*100, 1)} 
+                    for name, val in top_devices
+                ]
+            }
+
+            # 3. Tạo Prompt (Kỹ thuật Prompt Engineering)
+            prompt = f"""
+            Đóng vai chuyên gia tiết kiệm năng lượng của EVN. Hãy phân tích dữ liệu JSON sau:
+            {json.dumps(prompt_data, ensure_ascii=False)}
+
+            Yêu cầu:
+            1. Tìm ra 3 vấn đề lãng phí điện cụ thể nhất dựa trên 'user_profile' và 'top_consumers'.
+            2. Đưa ra giải pháp thực tế (ví dụ: nhà ít người mà dùng nhiều nước nóng thì khuyên gì?).
+            3. TRẢ VỀ KẾT QUẢ CHỈ Ở DẠNG JSON (không giải thích thêm) theo mẫu:
+            [
+                {{
+                    "device": "Tên thiết bị (kèm icon)",
+                    "priority": "high" hoặc "medium",
+                    "current": "Mô tả ngắn tình trạng hiện tại (ví dụ: Chiếm 40% hóa đơn)",
+                    "actions": ["Hành động 1", "Hành động 2"],
+                    "saving": "Ước tính tiết kiệm (ngắn gọn)"
+                }}
+            ]
+            """
+
+            # 4. Gọi AI
+            response = model.generate_content(prompt)
+            
+            # 5. Xử lý kết quả trả về (Clean JSON)
+            text_response = response.text.strip()
+            if text_response.startswith("```json"):
+                text_response = text_response[7:-3] # Cắt bỏ markdown code block
+            
+            return json.loads(text_response)
+
+        except Exception as e:
+            print(f"⚠️ AI Error: {e}. Switching to rule-based.")
+            # Nếu AI lỗi, gọi lại hàm Logic cũ của bạn để đảm bảo app không chết
+            return self.get_saving_recommendations(result, user_params)
 # ================== DEMO ==================
 
 if __name__ == "__main__":
