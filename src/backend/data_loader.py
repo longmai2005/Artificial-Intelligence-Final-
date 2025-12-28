@@ -4,7 +4,7 @@ import streamlit as st
 import os
 
 @st.cache_data
-def load_dataset(file_path="cleaned_dataset.csv", nrows=None):
+def load_dataset(file_path="data/cleaned_dataset.csv", nrows=None):
     """
     Ưu tiên load dữ liệu thật từ cleaned_dataset.csv.
     Nếu không thấy file, sẽ tự động chuyển sang chế độ DEMO.

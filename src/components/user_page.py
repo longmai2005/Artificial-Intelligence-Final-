@@ -108,7 +108,8 @@ def render_user_page(username, name):
             
             # Button (Sửa lại cú pháp cho an toàn)
             try:
-                predict_btn = st.button("🚀 Dự đoán Thông minh", type="primary", width='stretch')
+                predict_btn = st.button("🚀 Dự đoán Thông minh", type="primary", use_container_width=True)
+
             except TypeError:
                 predict_btn = st.button("🚀 Dự đoán Thông minh", type="primary")
         
@@ -187,7 +188,7 @@ def render_user_page(username, name):
                     
                     fig_device = px.bar(device_df, x='Thiết bị', y='kWh', text='Tỷ lệ', color='kWh', color_continuous_scale='Viridis')
                     fig_device.update_layout(height=350, showlegend=False, xaxis_title='', yaxis_title='kWh/tháng', margin=dict(t=20, b=20, l=20, r=20))
-                    st.plotly_chart(fig_device, width='stretch')
+                    st.plotly_chart(fig_device, use_container_width=True)
                 
                 # --- ĐÃ XÓA PHẦN PATTERN THEO GIỜ ĐỂ TRÁNH LỖI ---
                 
@@ -341,7 +342,7 @@ def render_user_page(username, name):
                     title="So sánh chi phí (VNĐ)",
                     margin=dict(l=20, r=20, t=30, b=20)
                 )
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
     
     # ==================== TAB 3: LỊCH SỬ ====================
 
@@ -370,7 +371,8 @@ def render_user_page(username, name):
 
             event = st.dataframe(
                 display_df,
-                width='stretch',
+                use_container_width=True,
+
                 hide_index=True,
                 on_select="rerun", 
                 selection_mode="multi-row"
@@ -437,7 +439,7 @@ def render_user_page(username, name):
                     hovermode="x unified",
                     legend=dict(orientation="h", y=1.1)
                 )
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Chưa có lịch sử. Hãy thực hiện dự đoán ở Tab 1!")
     
@@ -492,7 +494,8 @@ def render_user_page(username, name):
                     }
                 ))
                 fig_gauge.update_layout(height=300, margin=dict(t=30, b=10, l=20, r=20))
-                st.plotly_chart(fig_gauge, width='stretch')
+                st.plotly_chart(fig_gauge, use_container_width=True)
+
                 
                 # Đánh giá bằng chữ
                 if kwh_per_capita < 50:

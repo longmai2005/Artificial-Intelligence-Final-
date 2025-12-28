@@ -24,5 +24,5 @@ __pycache__/
 .vscode/
 .idea/
 
-# Bỏ qua file model quá nặng (nếu file .h5 > 100MB thì bỏ comment dòng dưới)
-# models/*.h5
+.streamlit/
+
