@@ -485,6 +485,12 @@
             "inputs": "Nh\u00e0 ph\u1ed1 - 5 ng\u01b0\u1eddi - 40m\u00b2",
             "kwh": 218.82,
             "cost": 487789
+        },
+        {
+            "timestamp": "2025-12-28 23:05:29",
+            "inputs": "Nh\u00e0 ph\u1ed1 - 3 ng\u01b0\u1eddi - 60m\u00b2",
+            "kwh": 138.12,
+            "cost": 287497
         }
     ],
     "khtran": [
