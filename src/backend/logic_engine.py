@@ -38,7 +38,6 @@ def calculate_evn_bill(kwh):
     breakdown.append(f"• Tổng trước thuế: {int(total_bill_pre_tax):,}đ")
     breakdown.append(f"• Thuế GTGT ({int(VAT_RATE*100)}%): {int(vat_cost):,}đ")
     
-    # DÒNG QUAN TRỌNG: Hiển thị tổng cuối cùng để khớp với con số to bên ngoài
     breakdown.append(f"👉 TỔNG THANH TOÁN: {int(total_bill_final):,}đ")
     
     return int(total_bill_final), breakdown

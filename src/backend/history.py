@@ -55,7 +55,7 @@ def clear_history(username):
         
         # 2. Kiểm tra và xóa user
         if username in all_history:
-            del all_history[username] # Xóa key của user này
+            del all_history[username] # Xóa key của user 
             
             # 3. Lưu lại file đã cập nhật
             with open(HISTORY_FILE, "w") as f:
