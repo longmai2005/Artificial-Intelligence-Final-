@@ -109,6 +109,7 @@ def render_user_page(username, name):
             # Button (Sửa lại cú pháp cho an toàn)
             try:
                 predict_btn = st.button("🚀 Dự đoán Thông minh", type="primary", use_container_width=True)
+
             except TypeError:
                 predict_btn = st.button("🚀 Dự đoán Thông minh", type="primary")
         
@@ -371,6 +372,7 @@ def render_user_page(username, name):
             event = st.dataframe(
                 display_df,
                 use_container_width=True,
+
                 hide_index=True,
                 on_select="rerun", 
                 selection_mode="multi-row"
@@ -493,6 +495,7 @@ def render_user_page(username, name):
                 ))
                 fig_gauge.update_layout(height=300, margin=dict(t=30, b=10, l=20, r=20))
                 st.plotly_chart(fig_gauge, use_container_width=True)
+
                 
                 # Đánh giá bằng chữ
                 if kwh_per_capita < 50:

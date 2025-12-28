@@ -466,4 +466,3 @@ if __name__ == "__main__":
         print(f"   • {device}: {kwh:.0f} kWh ({percent:.1f}%)")
 
     print("\n" + "="*70)
-
