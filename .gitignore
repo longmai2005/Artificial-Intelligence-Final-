@@ -6,6 +6,7 @@ checkpoints/best_model_random_forest.pkl
 checkpoints/best_model_lightgbm.pkl
 cleaned_dataset.csv
 checkpoints/*.pkl
+.streamlit/secrets.toml
 # Giữ lại file .gitkeep nếu thư mục data trống (để giữ cấu trúc thư mục)
 !data/.gitkeep
 

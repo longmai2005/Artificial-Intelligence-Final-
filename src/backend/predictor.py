@@ -9,6 +9,8 @@ import joblib
 import os
 from datetime import datetime, timedelta
 import warnings
+import google.generativeai as genai
+import json
 warnings.filterwarnings('ignore')
 
 class EnergyPredictor:
@@ -27,6 +29,8 @@ class EnergyPredictor:
         'tv': {'power_kw': 0.15, 'hours_per_day': 4},
         'washer': {'power_kw': 0.8, 'times_per_week': 4, 'hours_per_time': 1.5},
         'water_heater': {'power_kw': 2.5, 'hours_per_day': 0.5}, # Thực tế chỉ bật 15-30p là đủ nóng
+        'lighting': {'power_per_bulb': 0.009, 'bulbs_per_person': 4, 'bulbs_per_10m2': 1.5, 'hours_per_day': 6},
+        'other': {'base_power': 0.05, 'hours_per_day': 24}
     }
     
     HOUSEHOLD_FACTORS = {
@@ -35,7 +39,7 @@ class EnergyPredictor:
         'area_base': 50, 'area_increment': 0.01
     }
     
-    def __init__(self, model_path='checkpoints/best_model_final.pkl'):
+    def __init__(self, model_path='checkpoints/best_model_random_forest.pkl'):
         self.model_path = model_path
         self.model = None
         self.scaler = None
@@ -54,6 +58,7 @@ class EnergyPredictor:
         else: self.model = None
 
     def predict_next_24h_sum(self, last_sequence):
+        """Chỉ trả về TỔNG kWh của 24h tiếp theo (Không cần chi tiết từng giờ để vẽ)"""
         if self.model is None:
             return np.mean(last_sequence) * 24 if len(last_sequence) > 0 else 8.0
 
@@ -64,7 +69,7 @@ class EnergyPredictor:
             
             for i in range(1, 25):
                 future_time = now + timedelta(hours=i)
-                # Logic Lag & Season
+                # Logic Lag & Season (Giữ nguyên vì nó giúp AI chính xác)
                 lag_24 = last_sequence[i-1] if i <= len(last_sequence) else avg_val
                 
                 weekday = future_time.weekday()
@@ -103,6 +108,10 @@ class EnergyPredictor:
         return 8.0
 
     def calculate_user_adjustment_factor(self, user_params, days=30):
+        """
+        Tính toán tiêu thụ dựa trên thiết bị người dùng khai báo.
+        Đã cập nhật công suất chuẩn 2025 (Inverter/LED).
+        """
         # 1. Hệ số Nhà & Con người
         house_factor = self.HOUSEHOLD_FACTORS['house_type'].get(user_params.get('house_type', 'Nhà phố'), 1.0)
         
@@ -119,7 +128,7 @@ class EnergyPredictor:
         elif month in [3, 4]: season = 'spring'
         else: season = 'fall'
 
-        # 3. Tính toán từng thiết bị 
+        # 3. Tính toán từng thiết bị (Lưu ý: Luôn nhân với days)
         device_kwh = {}
         
         # [A] Máy lạnh (AC): Công suất 0.8kW (Inverter), chạy 8h/ngày
@@ -147,6 +156,15 @@ class EnergyPredictor:
         heater = self.DEVICE_PROFILES['water_heater']
         device_kwh['Bình nóng lạnh'] = user_params.get('num_water_heater', 0) * heater['power_kw'] * heater['hours_per_day'] * days
         
+        # [F] Chiếu sáng (LED): Giả định 4 bóng/người, dùng 6h/ngày
+        lighting = self.DEVICE_PROFILES['lighting']
+        total_bulbs = num_people * lighting['bulbs_per_person']
+        device_kwh['Chiếu sáng'] = total_bulbs * lighting['power_per_bulb'] * lighting['hours_per_day'] * days
+        
+        # [G] Khác (Wifi, Sạc, Quạt...): Base load 0.1kW chạy 24/24
+        other = self.DEVICE_PROFILES['other']
+        device_kwh['Wifi, Quạt & Khác'] = other['base_power'] * other['hours_per_day'] * days
+
         # Tổng hợp
         total_device_kwh = sum(device_kwh.values())
 
@@ -162,6 +180,7 @@ class EnergyPredictor:
         if kwh_per_m2 < 0.5: base_score -= 0.25
         elif kwh_per_m2 < 1.0: base_score -= 0.10
         
+        # Thưởng nếu có AI Model
         if self.model is not None: base_score += 0.05
         
         confidence = np.clip(base_score, 0.40, 0.98)
@@ -217,10 +236,36 @@ class EnergyPredictor:
             'lower_bound': final_kwh - margin,
             'upper_bound': final_kwh + margin,
             'confidence': confidence,
-            'device_kwh': device_monthly, 
+            'device_kwh': device_monthly, # Dùng để vẽ biểu đồ tròn
             'adjustment_details': adjustment
         }
+        
+    def _extract_hourly_pattern(self, history_df):
+        """Trích xuất pattern tiêu thụ thực tế từ dữ liệu lịch sử"""
+        try:
+            # Kiểm tra nếu chưa có cột 'hour', tạo từ index (nếu index là datetime)
+            df = history_df.copy()
+            if 'hour' not in df.columns:
+                df['hour'] = df.index.hour
+                
+            if 'Global_active_power' in df.columns:
+                # Tính giá trị trung bình tiêu thụ cho mỗi khung giờ (0-23h)
+                hourly_avg = df.groupby('hour')['Global_active_power'].mean()
+                # Đảm bảo đủ 24 giờ, điền 0 nếu giờ đó không có dữ liệu
+                pattern = hourly_avg.reindex(range(24), fill_value=0).values
+                
+                # Chuẩn hóa: Nếu hoàn toàn không có dữ liệu, trả về mức cơ bản 0.5
+                if pattern.sum() == 0:
+                    return [0.5] * 24
+                    
+                return pattern.tolist()
+        except Exception as e:
+            print(f"⚠️ Lỗi trích xuất pattern: {e}")
             
+        # Fallback: Trả về mức tiêu thụ mặc định
+        return [0.5, 0.4, 0.3, 0.3, 0.4, 0.6, 1.2, 1.5, 1.0, 0.8, 0.7, 0.7, 
+                0.8, 0.9, 0.8, 0.9, 1.1, 1.8, 2.2, 2.1, 1.5, 1.0, 0.7, 0.6]
+    
     def get_saving_recommendations(self, result, user_params):
         """
         Tạo danh sách lời khuyên dựa trên thiết bị tiêu thụ nhiều nhất.
@@ -282,7 +327,84 @@ class EnergyPredictor:
                     'saving': f'Giảm ~{kwh*0.1:.0f} kWh'
                 })
 
+            # 4. Lời khuyên cho Chiếu sáng
+            elif device_name == 'Chiếu sáng':
+                recommendations.append({
+                    'device': '💡 Chiếu sáng',
+                    'current': f'{kwh:.0f} kWh ({percent:.1f}%)',
+                    'priority': 'low',
+                    'actions': [
+                        'Thay toàn bộ sang bóng LED',
+                        'Tận dụng ánh sáng tự nhiên',
+                        'Lắp cảm biến chuyển động ở hành lang'
+                    ],
+                    'saving': f'Giảm ~{kwh*0.3:.0f} kWh'
+                })
+
         return recommendations
+    
+    def get_ai_recommendations(self, result, user_params, api_key=None):
+        if not api_key:
+            return self.get_saving_recommendations(result, user_params)
+
+        try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-1.5-flash') # Model nhanh và rẻ
+
+            # 2. Chuẩn bị dữ liệu (Context) cho AI
+            details = result['adjustment_details']
+            top_devices = sorted(details['device_kwh'].items(), key=lambda x: x[1], reverse=True)[:3]
+            
+            prompt_data = {
+                "user_profile": {
+                    "people": user_params.get('num_people'),
+                    "area": user_params.get('area_m2'),
+                    "house_type": user_params.get('house_type')
+                },
+                "monthly_bill": {
+                    "kwh": result['total_kwh'],
+                    "season": details['season']
+                },
+                "top_consumers": [
+                    {"device": name, "kwh": val, "percent": round((val/result['total_kwh'])*100, 1)} 
+                    for name, val in top_devices
+                ]
+            }
+
+            # 3. Tạo Prompt (Kỹ thuật Prompt Engineering)
+            prompt = f"""
+            Đóng vai chuyên gia tiết kiệm năng lượng của EVN. Hãy phân tích dữ liệu JSON sau:
+            {json.dumps(prompt_data, ensure_ascii=False)}
+
+            Yêu cầu:
+            1. Tìm ra 3 vấn đề lãng phí điện cụ thể nhất dựa trên 'user_profile' và 'top_consumers'.
+            2. Đưa ra giải pháp thực tế (ví dụ: nhà ít người mà dùng nhiều nước nóng thì khuyên gì?).
+            3. TRẢ VỀ KẾT QUẢ CHỈ Ở DẠNG JSON (không giải thích thêm) theo mẫu:
+            [
+                {{
+                    "device": "Tên thiết bị (kèm icon)",
+                    "priority": "high" hoặc "medium",
+                    "current": "Mô tả ngắn tình trạng hiện tại (ví dụ: Chiếm 40% hóa đơn)",
+                    "actions": ["Hành động 1", "Hành động 2"],
+                    "saving": "Ước tính tiết kiệm (ngắn gọn)"
+                }}
+            ]
+            """
+
+            # 4. Gọi AI
+            response = model.generate_content(prompt)
+            
+            # 5. Xử lý kết quả trả về (Clean JSON)
+            text_response = response.text.strip()
+            if text_response.startswith("```json"):
+                text_response = text_response[7:-3] # Cắt bỏ markdown code block
+            
+            return json.loads(text_response)
+
+        except Exception as e:
+            print(f"⚠️ AI Error: {e}. Switching to rule-based.")
+            # Nếu AI lỗi, gọi lại hàm Logic cũ của bạn để đảm bảo app không chết
+            return self.get_saving_recommendations(result, user_params)
 # ================== DEMO ==================
 
 if __name__ == "__main__":
